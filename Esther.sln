@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.271
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Esther", "Esther\Esther.pyproj", "{B6D25994-AAEB-4BE5-AED3-5855F7A219DA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B6D25994-AAEB-4BE5-AED3-5855F7A219DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6D25994-AAEB-4BE5-AED3-5855F7A219DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {74E627E4-0F78-415B-9B52-834FFCF61EC9}
+	EndGlobalSection
+EndGlobal
