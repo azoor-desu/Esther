@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<ProfilingTarget xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ProjectTarget>
+    <TargetProject>b6d25994-aaeb-4be5-aed3-5855f7a219da</TargetProject>
+    <FriendlyName>Esther</FriendlyName>
+  </ProjectTarget>
+  <Reports>
+    <Report>
+      <Filename>C:\Users\Azoor\AppData\Local\Temp\Esther_20191011.vsp</Filename>
+    </Report>
+  </Reports>
+</ProfilingTarget>
