@@ -126,20 +126,21 @@ class Processor():
                     
                     outlineScore = 0
                     phraseScore = [0,] * len(phrasePos)
-                    keywordWeight = 1.6;
+                    keywordWeight = 1.7;
 
                     #Calculate base phraseScore for each phrase based on whether it is a keyword or not
                     totalScore = len(phraseScore) - nestedOutline[4] + keywordWeight * nestedOutline[4]
 
                     for k in range(0,len(phraseScore)):
-                        if nestedOutline[3][k] in this.keywords[nestedOutline[0]]:
-                            phraseScore[k] = 1/totalScore*keywordWeight
-                        else:
-                            phraseScore[k] = 1/totalScore*1
-                        if k != 0:
-                            outlineScore += phraseScore[k] - ((abs(phrasePos[k] - phrasePos[k-1]) - 1) * phraseScore[k] * nestedOutline[2])
-                        else:
-                            outlineScore += phraseScore[k]
+                        if phrasePos[k] != -1:
+                            if nestedOutline[3][k] in this.keywords[nestedOutline[0]]:
+                                phraseScore[k] = 1/totalScore*keywordWeight
+                            else:
+                                phraseScore[k] = 1/totalScore*1
+                            if k != 0:
+                                outlineScore += phraseScore[k] - ((abs(phrasePos[k] - phrasePos[k-1]) - 1) * phraseScore[k] * nestedOutline[2])
+                            else:
+                                outlineScore += phraseScore[k]
 
                     outlineScore *= nestedOutline[1]
                     print (phraseScore)
