@@ -20,7 +20,10 @@ class Processor():
         this.keywords.setdefault("ask_time",["time"])
         this.keywords.setdefault("ask_if_faggot",["faggot"])
 
-        this.synonyms.setdefault("computer",["pc","rig","battlestation"])
+        this.synonyms.setdefault("require","need")
+        this.synonyms.setdefault("pc","computer")
+        this.synonyms.setdefault("rig","computer")
+        this.synonyms.setdefault("battlestation","computer")
 
         this.entitiesList.setdefault("!days",["monday","tuesday","wednesday","thursday","friday","saturday","sunday"])
         this.entitiesList.setdefault("!days_relative",["yesterday","today","tomorrow"])
@@ -29,7 +32,6 @@ class Processor():
         this.AddOutline(["give","time"], "ask_time", 1,0.1)
         this.AddOutline(["tell","me","time"], "ask_time", 1,0.1)
         this.AddOutline(["need","time"], "ask_time", 1,0.1)
-        this.AddOutline(["require","time"], "ask_time", 1,0.1)
         this.AddOutline(["do","know","time"], "ask_time", 1,0.1)
         this.AddOutline(["have","current","time"], "ask_time", 1,0.15)
         this.AddOutline(["hello","you","faggot"], "ask_if_faggot", 1,0.1)
@@ -92,6 +94,9 @@ class Processor():
         for i in range(0,len(usrinput)):
             if usrinput[i][len(usrinput[i])-1] == '.':
                 usrinput[i] = usrinput[i][:-1]
+            #replace all synonyms
+            if usrinput[i] in this.synonyms:
+                usrinput[i] = this.synonyms[usrinput[i]]
 
         #Create a dict for score sorting
         scores = {}
@@ -120,33 +125,36 @@ class Processor():
                     #1 divide score by amount of phrases (if 4 phrases, each word will be worth 0.25)
                     #Keywords will hold more weight. Set in the intent txt file.
                     #Weighted values: 0 means hold no weight, 1 means normal weight, 2 means twice the weight.
-                    #2 Use distMod. If not the first phrase, do this: phraseScore - ((currindex - previndex - 1) * distMod * phraseScore)
+                    #2 Use distMod. If not the first phrase, do this: phraseBaseScore - ((currindex - previndex - 1) * distMod * phraseBaseScore)
                     #distMod will range from 0 (length dosent matter) to 1 (100% score penalty for each length away. 2 words means 200% penalty.)
                     #3 Use probability to round off the shiz. Default will be 1.
                     
                     outlineScore = 0
-                    phraseScore = [0,] * len(phrasePos)
                     keywordWeight = 1.7;
 
-                    #Calculate base phraseScore for each phrase based on whether it is a keyword or not
-                    totalScore = len(phraseScore) - nestedOutline[4] + keywordWeight * nestedOutline[4]
+                    #Calculate totalScore taking note of keywords
+                    totalScore = len(phrasePos) - nestedOutline[4] + keywordWeight * nestedOutline[4]
 
-                    for k in range(0,len(phraseScore)):
+                    for k in range(0,len(phrasePos)):
+                        #if this position index is not -1, it has a legit position in user's sentence. 
+                        #If not, phrase does not exist in user's sentence, so do not calculate.
                         if phrasePos[k] != -1:
+                            #Calculate the base score of each phrase
                             if nestedOutline[3][k] in this.keywords[nestedOutline[0]]:
-                                phraseScore[k] = 1/totalScore*keywordWeight
+                                phraseBaseScore = 1/totalScore*keywordWeight
                             else:
-                                phraseScore[k] = 1/totalScore*1
+                                phraseBaseScore = 1/totalScore*1
+                            #use base score to calculate modifier for words apart, and then add onto final score for this outline
                             if k != 0:
-                                outlineScore += phraseScore[k] - ((abs(phrasePos[k] - phrasePos[k-1]) - 1) * phraseScore[k] * nestedOutline[2])
+                                outlineScore += phraseBaseScore - ((abs(phrasePos[k] - phrasePos[k-1]) - 1) * phraseBaseScore * nestedOutline[2])
                             else:
-                                outlineScore += phraseScore[k]
+                                outlineScore += phraseBaseScore
 
                     outlineScore *= nestedOutline[1]
-                    print (phraseScore)
                     print (outlineScore)
+
                     #if scores alr exists, use the higher score
-                    if scores.get(nestedOutline[0],-1) != -1:
+                    if nestedOutline[0] in scores:
                         if scores[nestedOutline[0]] < outlineScore:
                             scores[nestedOutline[0]] = outlineScore
                     else:
