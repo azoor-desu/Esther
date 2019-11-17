@@ -1,7 +1,7 @@
-import Esther
+import __main__ as esther
 
 def EstherReply(output):
-    print (Esther.persona + ": " + output)
+    print (esther.persona + ": " + output)
     
 def SystemWarning(output):
     print ("WARNING: " + output)

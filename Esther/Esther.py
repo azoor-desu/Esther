@@ -1,6 +1,6 @@
 import sys
-from utilities import textout
-from utilities import processor
+import textout
+import processor
 
 persona = "Esther"
 
@@ -8,7 +8,7 @@ class Esther(object):
     
     #Runs once on program startup.
     def setup(self):
-        print ("\n-----Setting up!-----")
+        print ("\n-----Setting up!-----\n")
         self.pcs = processor.Processor()
         print ("-----Setup Finished!-----\n")
         print ("------------------------")
@@ -18,8 +18,10 @@ class Esther(object):
     def run(self):
         while 0==0:
             userInput = input('You: ')
+
             self.pcs.ProcessInput(userInput)
-            print ("------------------------\n")
+
+            print ("------------------------")
             print ("------------------------")
             textout.EstherReply("What can I do for you?")
 
