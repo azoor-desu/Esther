@@ -16,15 +16,6 @@ class Processor():
     def __init__(this):
         print ("Initializing processor...")
         this.LoadAllModules()
-        this.AddOutline(["what","time"], "ask_time", 1,0.1)
-        this.AddOutline(["give","time"], "ask_time", 1,0.1)
-        this.AddOutline(["tell","me","time"], "ask_time", 1,0.1)
-        this.AddOutline(["need","time"], "ask_time", 1,0.4)
-        this.AddOutline(["do","know","time"], "ask_time", 1,0.1)
-        this.AddOutline(["have","current","time"], "ask_time", 1,0.15)
-        this.AddOutline(["hello","you","faggot"], "ask_if_faggot", 1,0.1)
-        this.AddOutline(["time"], "ask_time", 0.8,0)
-        this.AddOutline(["are","you","faggot"], "ask_if_faggot", 1,0.3)
 
         this.keywords.setdefault("ask_time",["time"])
         this.keywords.setdefault("ask_if_faggot",["faggot"])
@@ -33,6 +24,17 @@ class Processor():
 
         this.entitiesList.setdefault("!days",["monday","tuesday","wednesday","thursday","friday","saturday","sunday"])
         this.entitiesList.setdefault("!days_relative",["yesterday","today","tomorrow"])
+
+        this.AddOutline(["what","time"], "ask_time", 1,0.1)
+        this.AddOutline(["give","time"], "ask_time", 1,0.1)
+        this.AddOutline(["tell","me","time"], "ask_time", 1,0.1)
+        this.AddOutline(["need","time"], "ask_time", 1,0.1)
+        this.AddOutline(["require","time"], "ask_time", 1,0.1)
+        this.AddOutline(["do","know","time"], "ask_time", 1,0.1)
+        this.AddOutline(["have","current","time"], "ask_time", 1,0.15)
+        this.AddOutline(["hello","you","faggot"], "ask_if_faggot", 1,0.1)
+        this.AddOutline(["time"], "ask_time", 0.8,0)
+        this.AddOutline(["are","you","faggot"], "ask_if_faggot", 1,0.3)
 
         print ("Processor initialized!\n")
         
@@ -56,15 +58,21 @@ class Processor():
 
         #outline structure
         # "phrase[0]" : [
-        #("intentName", probability, distMod, [phrase]),
-        #("intentName", probability, distMod, [phrase]),
-        #("intentName", probability, distMod, [phrase])
+        #("intentName", probability, distMod, [phrase], noKeywords),
+        #("intentName", probability, distMod, [phrase], noKeywords),
+        #("intentName", probability, distMod, [phrase], noKeywords)
         # ]
     def AddOutline (this, phraseList, intentName, probability, distMod):
+        #find number of keywords in phrases
+        noKeywords = 0
+        if this.keywords.get(intentName,0) != 0:
+            for item in phraseList:
+                if item in this.keywords[intentName]:
+                    noKeywords += 1
         if phraseList[0] in this.outlines:
-            this.outlines.get(phraseList[0]).append((intentName,probability, distMod, phraseList))
+            this.outlines.get(phraseList[0]).append((intentName,probability, distMod, phraseList, noKeywords))
         else:
-            this.outlines.setdefault(phraseList[0],[]).append((intentName,probability, distMod, phraseList))
+            this.outlines.setdefault(phraseList[0],[]).append((intentName,probability, distMod, phraseList, noKeywords))
 
     def ProcessInput(this,_usrinput):
         #clean up the user input. Remove all punctuations, leaving only . - and '
@@ -109,21 +117,32 @@ class Processor():
                     print (phrasePos)
 
                     #Calculating scores
-                    #1 divide score by amount of phrases (if 4 phrases, each word will be worth 0.25) ====NOTE!! ALERT!!==== <<<<< need to implement a word weight system. Certain keywords like "TIME" must be more important.
+                    #1 divide score by amount of phrases (if 4 phrases, each word will be worth 0.25)
+                    #Keywords will hold more weight. Set in the intent txt file.
+                    #Weighted values: 0 means hold no weight, 1 means normal weight, 2 means twice the weight.
                     #2 Use distMod. If not the first phrase, do this: phraseScore - ((currindex - previndex - 1) * distMod * phraseScore)
                     #distMod will range from 0 (length dosent matter) to 1 (100% score penalty for each length away. 2 words means 200% penalty.)
                     #3 Use probability to round off the shiz. Default will be 1.
                     
                     outlineScore = 0
-                    phraseScore = 1 / len(phrasePos)
+                    phraseScore = [0,] * len(phrasePos)
+                    keywordWeight = 1.6;
 
-                    for k in range(0,len(phrasePos)):
-                        if phrasePos[k] != -1:
-                            if k != 0:
-                                outlineScore += phraseScore - ((phrasePos[k] - phrasePos[k-1] - 1) * phraseScore * nestedOutline[2])
-                            else:
-                                outlineScore += phraseScore
+                    #Calculate base phraseScore for each phrase based on whether it is a keyword or not
+                    totalScore = len(phraseScore) - nestedOutline[4] + keywordWeight * nestedOutline[4]
+
+                    for k in range(0,len(phraseScore)):
+                        if nestedOutline[3][k] in this.keywords[nestedOutline[0]]:
+                            phraseScore[k] = 1/totalScore*keywordWeight
+                        else:
+                            phraseScore[k] = 1/totalScore*1
+                        if k != 0:
+                            outlineScore += phraseScore[k] - ((abs(phrasePos[k] - phrasePos[k-1]) - 1) * phraseScore[k] * nestedOutline[2])
+                        else:
+                            outlineScore += phraseScore[k]
+
                     outlineScore *= nestedOutline[1]
+                    print (phraseScore)
                     print (outlineScore)
                     #if scores alr exists, use the higher score
                     if scores.get(nestedOutline[0],-1) != -1:
