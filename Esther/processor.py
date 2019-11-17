@@ -67,7 +67,7 @@ class Processor():
     def AddOutline (this, phraseList, intentName, probability, distMod):
         #find number of keywords in phrases
         noKeywords = 0
-        if this.keywords.get(intentName,0) != 0:
+        if intentName in this.outlines:
             for item in phraseList:
                 if item in this.keywords[intentName]:
                     noKeywords += 1
