@@ -10,7 +10,7 @@ MOD_PATH = os.path.join(APP_PATH, "modules")
 class Processor():
     outlines = {}
     synonyms = {}
-    entitiesList = {}
+    entities = {}
 
     def __init__(this):
         print ("Initializing processor...")
@@ -20,10 +20,9 @@ class Processor():
         this.synonyms.setdefault("pc","computer")
         this.synonyms.setdefault("rig","computer")
         this.synonyms.setdefault("battlestation","computer")
-        this.synonyms.setdefault("battle station","computer")
 
-        this.entitiesList.setdefault("!days",["monday","tuesday","wednesday","thursday","friday","saturday","sunday"])
-        this.entitiesList.setdefault("!days_relative",["yesterday","today","tomorrow"])
+        this.entities.setdefault("!days",["monday","tuesday","wednesday","thursday","friday","saturday","sunday"])
+        this.entities.setdefault("!daysrelative",["yesterday","today","tomorrow"])
 
         this.AddOutline("ask_time", ["what","time"],(0,0.1),(1,2))
         this.AddOutline("ask_time", ["give","time"],(0,0.1),(1,2))
@@ -31,8 +30,26 @@ class Processor():
         this.AddOutline("ask_time", ["need","time"],(0,0.1),(1,2))
         this.AddOutline("ask_time", ["do","know","time"],(0,0.1,0.1),(1,1,2))
         this.AddOutline("ask_time", ["have","current","time"],(0,0.1,0.1),(1,1,2))
-        this.AddOutline("ask_if_faggot", ["are","you","faggot"],(0,0.1,0.1),(1,1,2))
-        this.AddOutline("ask_if_faggot", ["hello","you","faggot"],(0,0.1,0.1),(1,1,2))
+
+        this.AddOutline("ask_if_faggot", ("are","you","faggot"),(0,0.1,0.1),(0.1,0.2,2))
+        this.AddOutline("ask_if_faggot", ("hello","you","faggot"),(0,0.1,0.1),(0.5,0.2,2))
+
+        this.AddOutline("ask_day", ["what","day","!daysrelative"],(0,0.1,0.1),(1,2,2))
+        this.AddOutline("ask_day", ["give","me","day","!daysrelative"],(0,0.1,0.1,0.1),(1,1,2,2))
+        this.AddOutline("ask_day", ["tell","me","day","!daysrelative"],(0,0.1,0.1,0.1),(1,1,2,2))
+        this.AddOutline("ask_day", ["need","day","!daysrelative"],(0,0.1,0.1),(1,2,2))
+
+        this.AddOutline("ask_date", ["what","date","!daysrelative"],(0,0.1,0.1),(1,2,2))
+        this.AddOutline("ask_date", ["give","me","date","!daysrelative"],(0,0.1,0.1,0.1),(1,1,2,2))
+        this.AddOutline("ask_date", ["tell","me","date","!daysrelative"],(0,0.1,0.1,0.1),(1,1,2,2))
+        this.AddOutline("ask_date", ["need","date","!daysrelative"],(0,0.1,0.1),(1,2,2))
+
+        this.AddOutline("ask_date", ["what","date","is","!days"],(0,0.1,0.1,1),(1,2,1,2))
+        this.AddOutline("ask_date", ["what","date","on","!days"],(0,0.1,0.1,1),(1,2,1,2))
+        this.AddOutline("ask_date", ["give","me","date","!days"],(0,0.1,0.1,0.5),(1,1,2,2))
+        this.AddOutline("ask_date", ["need","date","!days"],(0,0.1,0.1),(1,2,2))
+
+        this.AddOutline("ask_date_day", ["need","date","!daysrelative","!days"],(0,0.1,0.1,0.1),(1,2,2,2))
 
         print ("Processor initialized!\n")
         
@@ -98,6 +115,8 @@ class Processor():
                 usrinput[i] = this.synonyms[usrinput[i]]
 
         #Create a dict for score sorting
+        #Format:
+        #scores[0] = "intentName": (scoreValue, [("entityType1","entityValue1") , ("enitityType2", "entityValue2")])
         scores = {}
 
         #Iterate every word in user sentence
@@ -108,16 +127,39 @@ class Processor():
 
                 #Iterate through all outlines within this starting phrase
                 for nestedOutline in this.outlines.get(usrinput[i]):
+                    print ("Recognized intent : " + str(nestedOutline))
+
+                    #Find any requests for entity in nestedOutline
+                    requestedEntites = []
+                    extractedEntities = []
+                    requestedEntityToRemove = ""
+                    for j in range(0,len(nestedOutline[1])):
+                        if nestedOutline[1][j][0] == '!': #if phrase starts with !
+                            requestedEntites.append(nestedOutline[1][j]) #add that entity group to be used later
 
                     #create tracker for which position each phrase appears in user's sentence
-                    print ("Recognized intent : " + str(nestedOutline))
                     phrasePos = [-1,] * len(nestedOutline[1])
-
+                    
                     #Start to scan the rest of the sentence using each outline in outlines[item]
                     #Start scanning from detected word onwards, not full sentence.
                     for j in range(i,len(usrinput)):
-                        if usrinput[j] in nestedOutline[1]:
-                            phrasePos[nestedOutline[1].index(usrinput[j])] = j
+                        if usrinput[j] in nestedOutline[1]: #if current word of user matches any phrases in outline
+                            phrasePos[nestedOutline[1].index(usrinput[j])] = j #Set phrasePos of corresponding phrase to index j
+                        #Run word through list of requestedEntities, if any
+                        if len(requestedEntites) != 0:
+                            
+                            for entityGrp in requestedEntites:
+                                print ("User's word now: " + usrinput[j] + " \nthe list to compare:" + str(this.entities[entityGrp]))
+                                if usrinput[j] in this.entities[entityGrp]: #if user input matches relevant entities, give the !entity a phrasePos value.
+                                    phrasePos[nestedOutline[1].index(entityGrp)] = j
+                                    extractedEntities.append((entityGrp,usrinput[j])) #stores extracted entity as ("entityName","entityValue")
+                                    print("ADDEEEEEED")
+                                    requestedEntityToRemove = entityGrp #disallow adding multiple entites if any to one outline. If outline requires one entity, return only one entity. Takes the first matched entity.
+                                    break
+                            if requestedEntityToRemove != "":
+                                requestedEntites.remove(requestedEntityToRemove)
+                                requestedEntityToRemove = ""
+                            
                     print ("Phrase's position in user sentence: " + str(phrasePos))
 
                     #Calculating scores
@@ -143,8 +185,8 @@ class Processor():
 
                     #if scores alr exists, use the higher score
                     if nestedOutline[0] in scores:
-                        if scores[nestedOutline[0]] < outlineScore:
-                            scores[nestedOutline[0]] = outlineScore
+                        if scores[nestedOutline[0]][0] < outlineScore:
+                            scores[nestedOutline[0]] = (outlineScore,extractedEntities)
                     else:
-                        scores.setdefault(nestedOutline[0],outlineScore)
+                        scores.setdefault(nestedOutline[0],(outlineScore,extractedEntities))
         print ("Final Results: " + str(scores))
