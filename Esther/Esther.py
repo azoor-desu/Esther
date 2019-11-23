@@ -7,16 +7,16 @@ persona = "Esther"
 class Esther(object):
     
     #Runs once on program startup.
-    def setup(self):
+    def setup(this):
         print ("\n-----Setting up!-----\n")
-        self.pcs = processor.Processor()
+        this.pcs = processor.Processor()
         print ("-----Setup Finished!-----\n")
         print ("------------------------")
         textout.EstherReply("Hello. I am " + persona + ". How may I be of service?")
     
     #Main running loop for taking input and stuff.
     def run(self):
-        while 0==0:
+        while True:
             userInput = input('You: ')
 
             self.pcs.ProcessInput(userInput)
