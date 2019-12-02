@@ -73,9 +73,7 @@ class Processor():
 
         #outline structure
         # "phrase[0]" : [
-        #("intentName", [phrases], [distMod], [phraseWeight]),
-        #("intentName", [phrases], [distMod], [phraseWeight]),
-        #("intentName", [phrases], [distMod], [phraseWeight])
+        #("intentName", [phrases], [(phrasePosDiffSD, phrasePosDiffAVG)], [phraseWeight], slrSD, slrAVG), etc... <<Replaced distmod with the tuple, added slrSD and slrAVG at the end. No change in exisitng pos.
         # ] 
     def AddOutline (this, intentName, phrases, distMod, phraseWeight):
         #phraseWeight is in [1,1,2,1] format, need to convert such that they all add up to 1.
@@ -93,26 +91,7 @@ class Processor():
             this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, distMod, newTuple))
 
     def ProcessInput(this,_usrinput):
-        #clean up the user input. Remove all punctuations, leaving only . - and '
-        tempusrinput = re.sub('[`~!@#$^&*()_+=[{}}\|:;<,>?/"]','',_usrinput).lower().split(' ')
-        usrinput = []
-
-        #split the 's and 'nt away.
-        for i in range(0,len(tempusrinput)):
-            if '\'' in tempusrinput[i]:
-                splitted = tempusrinput[i].split('\'',1)
-                usrinput.append(splitted[0])
-                usrinput.append("\'" + splitted[1])
-            else:
-                usrinput.append(tempusrinput[i])
-
-        #remove fullstop at end if any
-        for i in range(0,len(usrinput)):
-            if usrinput[i][len(usrinput[i])-1] == '.':
-                usrinput[i] = usrinput[i][:-1]
-            #replace all synonyms
-            if usrinput[i] in this.synonyms:
-                usrinput[i] = this.synonyms[usrinput[i]]
+        usrinput = this.FormatUsrinput(_usrinput)
 
         #Create a dict for score sorting
         #Format:
@@ -190,3 +169,26 @@ class Processor():
                     else:
                         scores.setdefault(nestedOutline[0],(outlineScore,extractedEntities))
         print ("Final Results: " + str(scores))
+
+    def FormatUsrinput(this, _usrinput):
+        #clean up the user input. Remove all punctuations, leaving only . - and '
+        tempusrinput = re.sub('[`~!@#$^&*()_+=[{}}\|:;<,>?/"]','',_usrinput).lower().split(' ')
+        usrinput = []
+
+        #split the 's and 'nt away.
+        for i in range(0,len(tempusrinput)):
+            if '\'' in tempusrinput[i]:
+                splitted = tempusrinput[i].split('\'',1)
+                usrinput.append(splitted[0])
+                usrinput.append("\'" + splitted[1])
+            else:
+                usrinput.append(tempusrinput[i])
+
+        #remove fullstop at end if any
+        for i in range(0,len(usrinput)):
+            if usrinput[i][len(usrinput[i])-1] == '.':
+                usrinput[i] = usrinput[i][:-1]
+            #replace all synonyms
+            if usrinput[i] in this.synonyms:
+                usrinput[i] = this.synonyms[usrinput[i]]
+        return usrinput
