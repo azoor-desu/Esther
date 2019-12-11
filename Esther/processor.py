@@ -24,32 +24,32 @@ class Processor():
         this.entities.setdefault("!days",["monday","tuesday","wednesday","thursday","friday","saturday","sunday"])
         this.entities.setdefault("!daysrelative",["yesterday","today","tomorrow"])
 
-        this.AddOutline("ask_time", ["what","time"],(0,0.1),(1,2))
-        this.AddOutline("ask_time", ["give","time"],(0,0.1),(1,2))
-        this.AddOutline("ask_time", ["tell","me","time"],(0,1,0.1),(1,1,2))
-        this.AddOutline("ask_time", ["need","time"],(0,0.1),(1,2))
-        this.AddOutline("ask_time", ["do","know","time"],(0,0.1,0.1),(1,1,2))
-        this.AddOutline("ask_time", ["have","current","time"],(0,0.1,0.1),(1,1,2))
+        this.AddOutline("ask_time", ["what","time"],(1,2))
+        this.AddOutline("ask_time", ["give","time"],(1,2))
+        this.AddOutline("ask_time", ["tell","me","time"],(1,1,2))
+        this.AddOutline("ask_time", ["need","time"],(1,2))
+        this.AddOutline("ask_time", ["do","know","time"],(1,1,2))
+        this.AddOutline("ask_time", ["have","current","time"],(1,1,2))
 
-        this.AddOutline("ask_if_faggot", ("are","you","faggot"),(0,0.1,0.1),(0.1,0.2,2))
-        this.AddOutline("ask_if_faggot", ("hello","you","faggot"),(0,0.1,0.1),(0.5,0.2,2))
+        this.AddOutline("ask_if_faggot", ("are","you","faggot"),(0.1,0.2,2))
+        this.AddOutline("ask_if_faggot", ("hello","you","faggot"),(0.5,0.2,2))
 
-        this.AddOutline("ask_day", ["what","day","!daysrelative"],(0,0.1,0.1),(1,2,2))
-        this.AddOutline("ask_day", ["give","me","day","!daysrelative"],(0,0.1,0.1,0.1),(1,1,2,2))
-        this.AddOutline("ask_day", ["tell","me","day","!daysrelative"],(0,0.1,0.1,0.1),(1,1,2,2))
-        this.AddOutline("ask_day", ["need","day","!daysrelative"],(0,0.1,0.1),(1,2,2))
+        this.AddOutline("ask_day", ["what","day","!daysrelative"],(1,2,2))
+        this.AddOutline("ask_day", ["give","me","day","!daysrelative"],(1,1,2,2))
+        this.AddOutline("ask_day", ["tell","me","day","!daysrelative"],(1,1,2,2))
+        this.AddOutline("ask_day", ["need","day","!daysrelative"],(1,2,2))
 
-        this.AddOutline("ask_date", ["what","date","!daysrelative"],(0,0.1,0.1),(1,2,2))
-        this.AddOutline("ask_date", ["give","me","date","!daysrelative"],(0,0.1,0.1,0.1),(1,1,2,2))
-        this.AddOutline("ask_date", ["tell","me","date","!daysrelative"],(0,0.1,0.1,0.1),(1,1,2,2))
-        this.AddOutline("ask_date", ["need","date","!daysrelative"],(0,0.1,0.1),(1,2,2))
+        this.AddOutline("ask_date", ["what","date","!daysrelative"],(1,2,2))
+        this.AddOutline("ask_date", ["give","me","date","!daysrelative"],(1,1,2,2))
+        this.AddOutline("ask_date", ["tell","me","date","!daysrelative"],(1,1,2,2))
+        this.AddOutline("ask_date", ["need","date","!daysrelative"],(1,2,2))
 
-        this.AddOutline("ask_date", ["what","date","is","!days"],(0,0.1,0.1,1),(1,2,1,2))
-        this.AddOutline("ask_date", ["what","date","on","!days"],(0,0.1,0.1,1),(1,2,1,2))
-        this.AddOutline("ask_date", ["give","me","date","!days"],(0,0.1,0.1,0.5),(1,1,2,2))
-        this.AddOutline("ask_date", ["need","date","!days"],(0,0.1,0.1),(1,2,2))
+        this.AddOutline("ask_date", ["what","date","is","!days"],(1,2,1,2))
+        this.AddOutline("ask_date", ["what","date","on","!days"],(1,2,1,2))
+        this.AddOutline("ask_date", ["give","me","date","!days"],(1,1,2,2))
+        this.AddOutline("ask_date", ["need","date","!days"],(1,2,2))
 
-        this.AddOutline("ask_date_day", ["need","date","!daysrelative","!days"],(0,0.1,0.1,0.1),(1,2,2,2))
+        this.AddOutline("ask_date_day", ["need","date","!daysrelative","!days"],(1,2,2,2))
 
         print ("Processor initialized!\n")
         
@@ -73,22 +73,26 @@ class Processor():
 
         #outline structure
         # "phrase[0]" : [
-        #("intentName", [phrases], [(phrasePosDiffSD, phrasePosDiffAVG)], [phraseWeight], slrSD, slrAVG), etc... <<Replaced distmod with the tuple, added slrSD and slrAVG at the end. No change in exisitng pos.
+        #("intentName", [phrases], [(phrasePosDiffAVG, phrasePosDiffSD)], [phraseWeight], slrAVG, slrSD), etc... <<Replaced distmod with the tuple, added slrSD and slrAVG at the end. No change in exisitng pos.
         # ] 
-    def AddOutline (this, intentName, phrases, distMod, phraseWeight):
+    def AddOutline (this, intentName, phrases, phraseWeight):
+
+        #CONVERSION OF PHRASEWEIGHT
         #phraseWeight is in [1,1,2,1] format, need to convert such that they all add up to 1.
         totalWeightRaw = 0
-        newTuple = [0,]* len(phraseWeight)
-
+        newPhraseWeight = [0,] * len(phraseWeight)
         for rawWeight in phraseWeight:
             totalWeightRaw += rawWeight #get sum of all weights
         for i in range(0,len(phraseWeight)):
-            newTuple[i] = (phraseWeight[i] / totalWeightRaw) #set new value into each tuple.
+            newPhraseWeight[i] = (phraseWeight[i] / totalWeightRaw) #set new value into each tuple.
+
+        #GENERATING DEFAULT SD and AVG values
+        distMod = [(0,0),] * len(phrases)
 
         if phrases[0] in this.outlines:
-            this.outlines.get(phrases[0]).append((intentName, phrases, distMod, newTuple))
+            this.outlines.get(phrases[0]).append((intentName, phrases, distMod, newPhraseWeight,0,0))
         else:
-            this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, distMod, newTuple))
+            this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, distMod, newPhraseWeight,0,0))
 
     def ProcessInput(this,_usrinput):
         usrinput = this.FormatUsrinput(_usrinput)
@@ -109,18 +113,18 @@ class Processor():
                     print ("Recognized intent : " + str(nestedOutline))
 
                     #Find any requests for entity in nestedOutline
-                    requestedEntites = []
+                    requestedEntities = []
                     extractedEntities = []
                     requestedEntityToRemove = ""
 
                     #ENTITIES STUFF: populate requestedEntities
                     for j in range(0,len(nestedOutline[1])):
                         if nestedOutline[1][j][0] == '!': #if phrase starts with !
-                            requestedEntites.append(nestedOutline[1][j]) #add that entity group to be used later
+                            requestedEntities.append(nestedOutline[1][j]) #add that entity group to be used later
 
                     #create tracker for which position each phrase appears in user's sentence, phasePos
                     phrasePos = [-1,] * len(nestedOutline[1])
-                    this.SetPhrasePos(i, usrinput,nestedOutline, phrasePos, requestedEntites, extractedEntities, requestedEntityToRemove)
+                    this.SetPhrasePos(i, usrinput,nestedOutline, phrasePos, requestedEntities, extractedEntities, requestedEntityToRemove)
                     #check if any phrasePos values are -1. Invalidate this entire outline if so.
                     if -1 in phrasePos:
                         print ("**Some phrase is not found in this outline: " + str(nestedOutline[1]) + " Skipping this outline**")
@@ -133,21 +137,8 @@ class Processor():
                     #distMod will range from 0 (no penalty) to 1 (100% score penalty for each length away. 2 words means 200% penalty.)
                     #add all scores together
                     
-                    outlineScore = 0
-
-                    for k in range(0,len(phrasePos)):
-                        #if this position index is not -1, it has a legit position in user's sentence. 
-                        #If not, phrase does not exist in user's sentence, so do not calculate.
-                        if phrasePos[k] != -1:
-                            #use base score to calculate modifier for words apart, and then add onto final score for this outline
-                            if k != 0:
-                                if phrasePos[k] - phrasePos[k-1] > 0: #if the position diff is -ve, e.g. [time, need] instead of [need, time], SKIP. DO NOT ADD ANY SCORE.
-                                    outlineScore += nestedOutline[3][k] - ((phrasePos[k] - phrasePos[k-1] - 1) * nestedOutline[2][k] * nestedOutline[3][k])
-                            else:
-                                outlineScore += nestedOutline[3][k]
-
-                    print ("Score for this outline: " + str(outlineScore))
-
+                    outlineScore = this.CalculateOutlineScore(phrasePos,nestedOutline, len(usrinput))
+                    
                     #if scores alr exists, use the higher score
                     if nestedOutline[0] in scores:
                         if scores[nestedOutline[0]][0] < outlineScore:
@@ -180,7 +171,7 @@ class Processor():
         return usrinput
     
     #todo: Skip entity searching if any phrasePos is -1.
-    def SetPhrasePos(this, i, usrinput, nestedOutline, phrasePos, requestedEntites, extractedEntities, requestedEntityToRemove):
+    def SetPhrasePos(this, i, usrinput, nestedOutline, phrasePos, requestedEntities, extractedEntities, requestedEntityToRemove):
         #Start to scan the rest of the sentence using each outline in outlines[item]
         #Start scanning from detected word onwards, not full sentence.
         for j in range(i,len(usrinput)):
@@ -189,8 +180,8 @@ class Processor():
 
             #ENTITIES STUFF
             #Run word through list of requestedEntities, if any
-            if len(requestedEntites) != 0:            
-                for entityGrp in requestedEntites:
+            if len(requestedEntities) != 0:            
+                for entityGrp in requestedEntities:
                     #print ("User's word now: " + usrinput[j] + " \nthe list to compare:" + str(this.entities[entityGrp]))
                     if usrinput[j] in this.entities[entityGrp]: #if user input matches relevant entities, give the !entity a phrasePos value.
                         phrasePos[nestedOutline[1].index(entityGrp)] = j
@@ -199,6 +190,34 @@ class Processor():
                         requestedEntityToRemove = entityGrp #disallow adding multiple entites if any to one outline. If outline requires one entity, return only one entity. Takes the first matched entity.
                         break
                 if requestedEntityToRemove != "":
-                    requestedEntites.remove(requestedEntityToRemove)
+                    requestedEntities.remove(requestedEntityToRemove)
                     requestedEntityToRemove = ""
                             
+    def CalculateOutlineScore(this, phrasePos, nestedOutline, usrinputlength):
+        outlineScore = 0
+        phraseWeight = nestedOutline[3]
+        phrasePosDiffAvgSd = nestedOutline[2]
+        slrAVG = nestedOutline[4]
+        slrSD = nestedOutline[5]
+        phrasePosDiff = [0,] * len(phrasePos)
+        spread = 0
+
+        #Calculate [phrasePosDiff]
+        #Convert [phrasePos] to [phrasePosDiff] e.g. [1,3,8] > [0,2,5]
+        for i in range(1,len(phrasePos)): #index 0 is always value 0, so start loop from 1.
+            phrasePosDiff[i] = phrasePos[i] - phrasePos[i-1]
+            spread = spread + phrasePosDiff[i]
+
+        
+        for i in range(0,len(phraseWeight)):
+            #Check if AVG and SD from training data exists
+            if phrasePosDiffAvgSd[i][1] is not 0:
+                phraseDistMod = abs(phrasePosDiff[i] - phrasePosDiffAvgSd[0]) / phrasePosDiffAvgSd[1]
+                slrMod = abs((spread / usrinputlength) - slrAVG) / slrSD
+                outlineScore = outlineScore + phraseWeight[i] * phraseDistMod * slrMod #sum [phraseWeight] with modifiers to get total score
+            #No training data exists. Calculate according to distance away.
+            else: 
+                outlineScore = outlineScore + (phraseWeight[i] - (phrasePosDiff[i] * 0.06))
+
+        print ("Score for this outline: " + str(outlineScore))
+        return outlineScore
