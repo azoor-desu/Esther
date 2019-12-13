@@ -7,6 +7,7 @@ TRAIN_PATH = os.path.join(DATA_PATH, "training.json")
 DATA_PATH = os.path.join(DATA_PATH, "intents")
 
 class DataImporter():
+    trainingdata = {}
 
     def PopulateOutlinesDict(this):
         print ("DataImporter: Loading intent outlines from disk...")
@@ -48,9 +49,8 @@ class DataImporter():
         return this.outlines
 
     #outline structure
-    # "phrase[0]" : [
-    #("intentName", [phrases], [(phrasePosDiffAVG, phrasePosDiffSD)], [phraseWeight], slrAVG, slrSD), etc... <<Replaced distmod with the tuple, added slrSD and slrAVG at the end. No change in exisitng pos.
-    # ] 
+    # "phrase[0]" :
+    #[("intentName", [phrases], [(phrasePosDiffAVG, phrasePosDiffSD)], [phraseWeight], slrAVG, slrSD)]
     def AddOutline (this, intentName, phrases, phraseWeight):
 
         #CONVERSION OF PHRASEWEIGHT
@@ -63,9 +63,48 @@ class DataImporter():
             newPhraseWeight[i] = (phraseWeight[i] / totalWeightRaw) #set new value into each tuple.
 
         #GENERATING DEFAULT SD and AVG values
-        distMod = [(0,0),] * len(phrases)
+        phrasePosDiffAvgSd = [(0,0),] * len(phrases)
 
         if phrases[0] in this.outlines:
-            this.outlines.get(phrases[0]).append((intentName, phrases, distMod, newPhraseWeight,0,0))
+            this.outlines.get(phrases[0]).append((intentName, phrases, phrasePosDiffAvgSd, newPhraseWeight,0,0))
         else:
-            this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, distMod, newPhraseWeight,0,0))
+            this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, phrasePosDiffAvgSd, newPhraseWeight,0,0))
+
+    #loads existing json file into trainingdata dict
+    def PopulateTrainingData(this):
+        print("")
+
+    # trainingdata structure:
+    # "outline key":
+    # [([phrasePosDiff], usrinputlength)]
+    #Try to add data into the trainingdata dict, from processor.py when a match is found.
+    def UpdateTrainingData(this, phrases, phrasePos, usrinputlength):        
+        #need to convert: 
+        #[phrases] >> _outlineKey (string)
+        #[phrasePos] >> [phrasePosDiff]
+
+        #need to convert [phrases] into one single string
+        _outlineKey = ""
+        for item in phrases:
+            _outlineKey = _outlineKey + " " + item
+
+        phrasePosDiff = [0,] * len(phrasePos)
+        #need to convert [phrasePos] >> [phrasePosDiff]
+        for i in range(1,len(phrasePos)): #index 0 is always value 0, so start loop from 1.
+            phrasePosDiff[i] = phrasePos[i] - phrasePos[i-1]
+
+        #Make _data
+        _data = (phrasePosDiff,usrinputlength)
+
+        #_data is in this format: ([phrasePosDiff], usrinputlength)
+        if _outlineKey in this.trainingdata:
+            if _data not in this.trainingdata[_outlineKey]: #Add data if OUTLINE exists and _data is not in dict yet
+                this.trainingdata[_outlineKey].append(_data)
+            else:
+                print ("Data already exists.")
+        else:
+            this.trainingdata.setdefault(_outlineKey,[]) #If key does not exist, create one and add the data to it.
+            this.trainingdata[_outlineKey].append(_data)
+
+    def WriteTrainingData(this):
+        print("")

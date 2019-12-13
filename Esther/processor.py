@@ -7,6 +7,9 @@ APP_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file_
 MOD_PATH = os.path.join(APP_PATH, "modules")
 
 class Processor():
+    #outline structure
+    # "phrase[0]" :
+    #[("intentName", [phrases], [(phrasePosDiffAVG, phrasePosDiffSD)], [phraseWeight], slrAVG, slrSD)]
     outlines = {}
     synonyms = {}
     entities = {}
@@ -46,11 +49,6 @@ class Processor():
 
         print ("{} modules(s) loaded".format(len(this.modules)))
 
-        #outline structure
-        # "phrase[0]" : [
-        #("intentName", [phrases], [(phrasePosDiffAVG, phrasePosDiffSD)], [phraseWeight], slrAVG, slrSD), etc... <<Replaced distmod with the tuple, added slrSD and slrAVG at the end. No change in exisitng pos.
-        # ] 
-
     def ProcessInput(this,_usrinput):
 
         usrinput = this.FormatUsrinput(_usrinput)
@@ -88,6 +86,9 @@ class Processor():
                         print ("**Some phrase is not found in this outline: " + str(nestedOutline[1]) + " Skipping this outline**")
                         continue
                     print ("Phrase's position in user sentence: " + str(phrasePos))
+
+                    #Update training data for matches.
+                    this.data.UpdateTrainingData(nestedOutline[1],phrasePos,len(usrinput))
 
                     #Calculating scores
                     #Take phraseWeight and apply below formula.
