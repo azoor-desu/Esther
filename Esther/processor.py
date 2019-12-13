@@ -1,10 +1,9 @@
-import textout
 import os
 import pkgutil
 import re
+import dataimporter
 
-APP_PATH = os.path.normpath(os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), os.pardir))
+APP_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
 MOD_PATH = os.path.join(APP_PATH, "modules")
 
 class Processor():
@@ -13,7 +12,10 @@ class Processor():
     entities = {}
 
     def __init__(this):
-        print ("Initializing processor...")
+        print ("Processor: Starting processor initialization" )
+        this.data = dataimporter.DataImporter()
+        this.outlines = this.data.PopulateOutlinesDict()
+
         this.LoadAllModules()
 
         this.synonyms.setdefault("require","need")
@@ -24,37 +26,10 @@ class Processor():
         this.entities.setdefault("!days",["monday","tuesday","wednesday","thursday","friday","saturday","sunday"])
         this.entities.setdefault("!daysrelative",["yesterday","today","tomorrow"])
 
-        this.AddOutline("ask_time", ["what","time"],(1,2))
-        this.AddOutline("ask_time", ["give","time"],(1,2))
-        this.AddOutline("ask_time", ["tell","me","time"],(1,1,2))
-        this.AddOutline("ask_time", ["need","time"],(1,2))
-        this.AddOutline("ask_time", ["do","know","time"],(1,1,2))
-        this.AddOutline("ask_time", ["have","current","time"],(1,1,2))
-
-        this.AddOutline("ask_if_faggot", ("are","you","faggot"),(0.1,0.2,2))
-        this.AddOutline("ask_if_faggot", ("hello","you","faggot"),(0.5,0.2,2))
-
-        this.AddOutline("ask_day", ["what","day","!daysrelative"],(1,2,2))
-        this.AddOutline("ask_day", ["give","me","day","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_day", ["tell","me","day","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_day", ["need","day","!daysrelative"],(1,2,2))
-
-        this.AddOutline("ask_date", ["what","date","!daysrelative"],(1,2,2))
-        this.AddOutline("ask_date", ["give","me","date","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_date", ["tell","me","date","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_date", ["need","date","!daysrelative"],(1,2,2))
-
-        this.AddOutline("ask_date", ["what","date","is","!days"],(1,2,1,2))
-        this.AddOutline("ask_date", ["what","date","on","!days"],(1,2,1,2))
-        this.AddOutline("ask_date", ["give","me","date","!days"],(1,1,2,2))
-        this.AddOutline("ask_date", ["need","date","!days"],(1,2,2))
-
-        this.AddOutline("ask_date_day", ["need","date","!daysrelative","!days"],(1,2,2,2))
-
-        print ("Processor initialized!\n")
+        print ("Processor: Processor initialized!\n")
         
     def LoadAllModules(this):
-        print ("Loading all modules into processor instance...")
+        print ("Module Loader: Loading all modules into processor instance...")
 
         locations = [MOD_PATH]
         this.modules = []
@@ -75,26 +50,9 @@ class Processor():
         # "phrase[0]" : [
         #("intentName", [phrases], [(phrasePosDiffAVG, phrasePosDiffSD)], [phraseWeight], slrAVG, slrSD), etc... <<Replaced distmod with the tuple, added slrSD and slrAVG at the end. No change in exisitng pos.
         # ] 
-    def AddOutline (this, intentName, phrases, phraseWeight):
-
-        #CONVERSION OF PHRASEWEIGHT
-        #phraseWeight is in [1,1,2,1] format, need to convert such that they all add up to 1.
-        totalWeightRaw = 0
-        newPhraseWeight = [0,] * len(phraseWeight)
-        for rawWeight in phraseWeight:
-            totalWeightRaw += rawWeight #get sum of all weights
-        for i in range(0,len(phraseWeight)):
-            newPhraseWeight[i] = (phraseWeight[i] / totalWeightRaw) #set new value into each tuple.
-
-        #GENERATING DEFAULT SD and AVG values
-        distMod = [(0,0),] * len(phrases)
-
-        if phrases[0] in this.outlines:
-            this.outlines.get(phrases[0]).append((intentName, phrases, distMod, newPhraseWeight,0,0))
-        else:
-            this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, distMod, newPhraseWeight,0,0))
 
     def ProcessInput(this,_usrinput):
+
         usrinput = this.FormatUsrinput(_usrinput)
 
         #Create a dict for score sorting
@@ -170,7 +128,6 @@ class Processor():
                 usrinput[i] = this.synonyms[usrinput[i]]
         return usrinput
     
-    #todo: Skip entity searching if any phrasePos is -1.
     def SetPhrasePos(this, i, usrinput, nestedOutline, phrasePos, requestedEntities, extractedEntities, requestedEntityToRemove):
         #Start to scan the rest of the sentence using each outline in outlines[item]
         #Start scanning from detected word onwards, not full sentence.
@@ -192,7 +149,7 @@ class Processor():
                 if requestedEntityToRemove != "":
                     requestedEntities.remove(requestedEntityToRemove)
                     requestedEntityToRemove = ""
-                            
+
     def CalculateOutlineScore(this, phrasePos, nestedOutline, usrinputlength):
         outlineScore = 0
         phraseWeight = nestedOutline[3]

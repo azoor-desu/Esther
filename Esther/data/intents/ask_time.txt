@@ -1,0 +1,6 @@
+what, [2]time
+give, [2]time
+tell me, [2]time
+need, [2]time
+[0.2]do, know, [2]time
+have, [2]time
