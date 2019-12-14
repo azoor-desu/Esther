@@ -29,10 +29,12 @@ app = Esther()
 
 #Main Thread
 if __name__ == "__main__":
-    print ("*******************************************************")
-    print ("*                ---PROJECT ESTHER---                 *")
-    print ("*         Experimental AI automated assistant         *")
-    print ("*******************************************************")
+    print ("*********************************************************")
+    print ("**                                                     **")
+    print ("**                ---PROJECT ESTHER---                 **")
+    print ("**  Experimental Voice Assistant for the Raspberry Pi  **")
+    print ("**                                                     **")
+    print ("*********************************************************")
     app.setup()
     app.run() #Loop here.
     sys.exit()

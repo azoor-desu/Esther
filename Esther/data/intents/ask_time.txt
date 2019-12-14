@@ -1,6 +1,7 @@
-what, [2]time
-give, [2]time
-tell me, [2]time
-need, [2]time
-[0.2]do, know, [2]time
-have, [2]time
+what, time[2]
+give, time[2]
+tell me, time[2]
+need, time[2]
+know, time[2]
+have, time[2]
+get, time[2]

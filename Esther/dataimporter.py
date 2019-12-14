@@ -1,15 +1,18 @@
 import os
 import Esther
+import json
 
-APP_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
-DATA_PATH = os.path.join(APP_PATH, "data")
-TRAIN_PATH = os.path.join(DATA_PATH, "training.json")
-DATA_PATH = os.path.join(DATA_PATH, "intents")
+#APP_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+TRAIN_PATH = "data/training.json"
 
 class DataImporter():
     trainingdata = {}
 
     def PopulateOutlinesDict(this):
+        print ("DataImporter: Loading Training Data...")
+        this.PopulateTrainingData()
+        print ("DataImporter: Finished loading Training Data")
+
         print ("DataImporter: Loading intent outlines from disk...")
         #DO LOADING. Load each txt file.
         #Sort data into the format below.
@@ -30,6 +33,7 @@ class DataImporter():
         this.AddOutline("ask_if_faggot", ("hello","you","faggot"),(0.5,0.2,2))
 
         this.AddOutline("ask_day", ["what","day","!daysrelative"],(1,2,2))
+        this.AddOutline("ask_day", ["what","day","is","it"],(1,2,1.5,1.5))
         this.AddOutline("ask_day", ["give","me","day","!daysrelative"],(1,1,2,2))
         this.AddOutline("ask_day", ["tell","me","day","!daysrelative"],(1,1,2,2))
         this.AddOutline("ask_day", ["need","day","!daysrelative"],(1,2,2))
@@ -72,7 +76,14 @@ class DataImporter():
 
     #loads existing json file into trainingdata dict
     def PopulateTrainingData(this):
-        print("")
+        print ("DataImporter: Reading disk training data")
+        if os.path.exists(TRAIN_PATH):
+            with open (TRAIN_PATH,'r') as fp:
+                this.trainingdata = json.load(fp)
+            print ("DataImporter: Reading training data finished")
+        else:
+            print ("DataImporter: NOTICE! Disk training data is not found. Creating blank training data file.")
+        print (str(this.trainingdata))
 
     # trainingdata structure:
     # "outline key":
@@ -86,7 +97,10 @@ class DataImporter():
         #need to convert [phrases] into one single string
         _outlineKey = ""
         for item in phrases:
-            _outlineKey = _outlineKey + " " + item
+            if _outlineKey != "":
+                _outlineKey = _outlineKey + " " + item
+            else:
+                _outlineKey = item
 
         phrasePosDiff = [0,] * len(phrasePos)
         #need to convert [phrasePos] >> [phrasePosDiff]
@@ -101,10 +115,14 @@ class DataImporter():
             if _data not in this.trainingdata[_outlineKey]: #Add data if OUTLINE exists and _data is not in dict yet
                 this.trainingdata[_outlineKey].append(_data)
             else:
-                print ("Data already exists.")
+                print ("DataImporter/UpdateTrainingData(): Data already exists.")
         else:
             this.trainingdata.setdefault(_outlineKey,[]) #If key does not exist, create one and add the data to it.
             this.trainingdata[_outlineKey].append(_data)
+        this.WriteTrainingData()
 
     def WriteTrainingData(this):
-        print("")
+        print ("DataImporter: Writing training data")
+        with open (TRAIN_PATH,'w') as fp:
+            json.dump(this.trainingdata,fp, sort_keys=True)
+        print ("DataImporter: Writing data completed.")

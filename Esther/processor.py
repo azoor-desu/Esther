@@ -21,6 +21,7 @@ class Processor():
 
         this.LoadAllModules()
 
+        #synonyms need to be able to extract multiple words from usrinput and replace them
         this.synonyms.setdefault("require","need")
         this.synonyms.setdefault("pc","computer")
         this.synonyms.setdefault("rig","computer")
@@ -55,7 +56,7 @@ class Processor():
 
         #Create a dict for score sorting
         #Format:
-        #scores[0] = "intentName": (scoreValue, [("entityType1","entityValue1") , ("enitityType2", "entityValue2")])
+        #scores[0] = "intentName": (scoreValue, [("entityType1","entityValue1") , ("enitityType2", "entityValue2")], [phrases], [phrasePos], usrinputlength)
         scores = {}
 
         #Iterate every word in user sentence
@@ -87,9 +88,6 @@ class Processor():
                         continue
                     print ("Phrase's position in user sentence: " + str(phrasePos))
 
-                    #Update training data for matches.
-                    this.data.UpdateTrainingData(nestedOutline[1],phrasePos,len(usrinput))
-
                     #Calculating scores
                     #Take phraseWeight and apply below formula.
                     #If not the first phrase, do this: phraseBaseScore - ((currindex - previndex - 1) * distMod * phraseWeight)
@@ -101,10 +99,28 @@ class Processor():
                     #if scores alr exists, use the higher score
                     if nestedOutline[0] in scores:
                         if scores[nestedOutline[0]][0] < outlineScore:
-                            scores[nestedOutline[0]] = (outlineScore,extractedEntities)
+                            scores[nestedOutline[0]] = (outlineScore,extractedEntities, nestedOutline[1], phrasePos, len(usrinput))
                     else:
-                        scores.setdefault(nestedOutline[0],(outlineScore,extractedEntities))
+                        scores.setdefault(nestedOutline[0],(outlineScore,extractedEntities, nestedOutline[1], phrasePos, len(usrinput)))
+
         print ("Final Results: " + str(scores))
+
+        #Search for highest score
+        highestScore = -1
+        highestKey = ""
+
+        for key, value in scores.items():
+            if value[0] > highestScore:
+                highestScore = value[0]
+                highestKey = key
+
+        if highestScore != -1:
+            print ("Intent chosen: \"" + highestKey + "\" with values: "+ str(scores[highestKey]))
+            #Update training data for matches.
+
+            #scores[0] IS TEMPORARY. scores[0] == top probability. 
+            #scores[x][2] = phrases | scores[x][3] = phrasePos  | scores[x][4] = usrinputlength 
+            this.data.UpdateTrainingData(scores[highestKey][2], scores[highestKey][3], scores[highestKey][4])
 
     def FormatUsrinput(this, _usrinput):
         #clean up the user input. Remove all punctuations, leaving only . - and '
