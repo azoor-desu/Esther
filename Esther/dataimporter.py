@@ -6,6 +6,7 @@ import json
 TRAIN_PATH = "data/training.json"
 
 class DataImporter():
+    # "outline key": [([phrasePosDiff], usrinputlength)]
     trainingdata = {}
 
     def PopulateOutlinesDict(this):
@@ -52,10 +53,10 @@ class DataImporter():
 
         return this.outlines
 
+    def AddOutline (this, intentName, phrases, phraseWeight):
     #outline structure
     # "phrase[0]" :
     #[("intentName", [phrases], [(phrasePosDiffAVG, phrasePosDiffSD)], [phraseWeight], slrAVG, slrSD)]
-    def AddOutline (this, intentName, phrases, phraseWeight):
 
         #CONVERSION OF PHRASEWEIGHT
         #phraseWeight is in [1,1,2,1] format, need to convert such that they all add up to 1.
@@ -66,13 +67,53 @@ class DataImporter():
         for i in range(0,len(phraseWeight)):
             newPhraseWeight[i] = (phraseWeight[i] / totalWeightRaw) #set new value into each tuple.
 
-        #GENERATING DEFAULT SD and AVG values
-        phrasePosDiffAvgSd = [(0,0),] * len(phrases)
+        #Assigning AVG and SD values for SLR and phrasePosDiff
+        #combine phrases so can search trainingdata dict
+        trainingdatakey = this.CombineStringsList(phrases)
 
+        #search for outline in trainingdata.
+        if (trainingdatakey in this.trainingdata and len(this.trainingdata[trainingdatakey]) > 3): #make sure there is at least 3 examples.
+
+            #Getting phrasePosDiffAvgSd
+
+            #When looping through trainingdata, get all the index 0s of each trainingdata item into one list, index 1s into another etc
+            #Basically change so that each 
+            #trainingdata[0] >> 1, 2, 3 | trainingdata[1] >> 4, 5, 6 | trainingdata[2] >> 7, 8, 9
+            #becomes:
+            #phraseLists[0] >> 1, 4, 7 | phrasePosDiff[1] >>2, 5, 8 | phrasePosDiff[2] >> 3, 6, 9
+            phraseLists = []
+            for i in range(0, len(phrases)):
+                phraseValues = []
+
+                for item in this.trainingdata[trainingdatakey]:
+                    phraseValues.append(item[0][i])
+
+                phraseLists.append(phraseValues)
+            print ("PHRASELISTS: " + str(phraseLists))
+
+            phrasePosDiffAvgSd = []
+            for item in phraseLists:
+                phrasePosDiffAvgSd.append((this.GetAvgOfList(item), this.GetSDOfList(item)))
+            print ("\n\n" + str(phrasePosDiffAvgSd) + "\n\n")
+            #Getting slrAVG and slrSD
+            #Create list with all the slr values
+            slr = []
+            for trainingdatavalues in this.trainingdata[trainingdatakey]:
+                slr.append(this.GetSumOfList(trainingdatavalues[0]) / trainingdatavalues[1])
+
+            if phrases[0] in this.outlines:
+                this.outlines.get(phrases[0]).append((intentName, phrases, phrasePosDiffAvgSd, newPhraseWeight,this.GetAvgOfList(slr),this.GetSDOfList(slr)))
+            else:
+                this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, phrasePosDiffAvgSd, newPhraseWeight,this.GetAvgOfList(slr),this.GetSDOfList(slr)))
+
+            return #Below won't run. Don't generate default blank values.
+
+        #if above if conditions are not fufiled, need to generate default AVG SD values.
+        #GENERATING DEFAULT SD and AVG values
         if phrases[0] in this.outlines:
-            this.outlines.get(phrases[0]).append((intentName, phrases, phrasePosDiffAvgSd, newPhraseWeight,0,0))
+            this.outlines.get(phrases[0]).append((intentName, phrases, [(0,0),] * len(phrases), newPhraseWeight,-1,-1))
         else:
-            this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, phrasePosDiffAvgSd, newPhraseWeight,0,0))
+            this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, [(0,0),] * len(phrases), newPhraseWeight,-1,-1))
 
     #loads existing json file into trainingdata dict
     def PopulateTrainingData(this):
@@ -83,24 +124,21 @@ class DataImporter():
             print ("DataImporter: Reading training data finished")
         else:
             print ("DataImporter: NOTICE! Disk training data is not found. Creating blank training data file.")
-        print (str(this.trainingdata))
+        #print (str(this.trainingdata))
 
+    
+    def UpdateTrainingData(this, phrases, phrasePos, usrinputlength):
     # trainingdata structure:
     # "outline key":
     # [([phrasePosDiff], usrinputlength)]
     #Try to add data into the trainingdata dict, from processor.py when a match is found.
-    def UpdateTrainingData(this, phrases, phrasePos, usrinputlength):        
+
         #need to convert: 
         #[phrases] >> _outlineKey (string)
         #[phrasePos] >> [phrasePosDiff]
 
         #need to convert [phrases] into one single string
-        _outlineKey = ""
-        for item in phrases:
-            if _outlineKey != "":
-                _outlineKey = _outlineKey + " " + item
-            else:
-                _outlineKey = item
+        _outlineKey = this.CombineStringsList(phrases)
 
         phrasePosDiff = [0,] * len(phrasePos)
         #need to convert [phrasePos] >> [phrasePosDiff]
@@ -126,3 +164,36 @@ class DataImporter():
         with open (TRAIN_PATH,'w') as fp:
             json.dump(this.trainingdata,fp, sort_keys=True)
         print ("DataImporter: Writing data completed.")
+
+    #For calculation and other misc purposes
+    def CombineStringsList(this, inputlist):
+        combined = ""
+        for item in inputlist:
+            if combined != "":
+                combined = combined + " " + item
+            else:
+                combined = item
+        return combined
+
+    def GetSumOfList (this, inputlist):
+        sum = 0
+        for item in inputlist:
+            sum = sum + item
+        return sum
+
+    def GetAvgOfList(this, inputlist):
+        return (this.GetSumOfList(inputlist) / len(inputlist))
+
+    def GetSDOfList(this, inputlist):
+        avg = this.GetAvgOfList(inputlist)
+        sd = 0
+        if avg != 0:
+            for item in inputlist:
+                sd = sd + ((item - avg)*(item - avg))
+            sd = sd / (len(inputlist)  - 1)
+            import math
+            return math.sqrt(sd)
+        else:
+            return 1 #if the average is 0, sd should be 0 also (ignoring the fact that the formula cannot handle 0)
+            #BUT, if SD is less than 1, the penalty would be too great cos the minimum words away would be 1.
+            #SO, cap SD at 1.

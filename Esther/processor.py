@@ -18,6 +18,7 @@ class Processor():
         print ("Processor: Starting processor initialization" )
         this.data = dataimporter.DataImporter()
         this.outlines = this.data.PopulateOutlinesDict()
+        print (str(this.outlines))
 
         this.LoadAllModules()
 
@@ -73,7 +74,6 @@ class Processor():
                     requestedEntities = []
                     extractedEntities = []
                     requestedEntityToRemove = ""
-
                     #ENTITIES STUFF: populate requestedEntities
                     for j in range(0,len(nestedOutline[1])):
                         if nestedOutline[1][j][0] == '!': #if phrase starts with !
@@ -94,7 +94,7 @@ class Processor():
                     #distMod will range from 0 (no penalty) to 1 (100% score penalty for each length away. 2 words means 200% penalty.)
                     #add all scores together
                     
-                    outlineScore = this.CalculateOutlineScore(phrasePos,nestedOutline, len(usrinput))
+                    outlineScore = this.CalculateOutlineScore(phrasePos, nestedOutline, len(usrinput))
                     
                     #if scores alr exists, use the higher score
                     if nestedOutline[0] in scores:
@@ -174,20 +174,21 @@ class Processor():
         slrAVG = nestedOutline[4]
         slrSD = nestedOutline[5]
         phrasePosDiff = [0,] * len(phrasePos)
-        spread = 0
+
+        #phraseDistModMultiplier = 0.3 #Random values my d00d, cos original might be too high
+        #slrModMultiplier = 0.3 #Random values my d00d
 
         #Calculate [phrasePosDiff]
         #Convert [phrasePos] to [phrasePosDiff] e.g. [1,3,8] > [0,2,5]
         for i in range(1,len(phrasePos)): #index 0 is always value 0, so start loop from 1.
             phrasePosDiff[i] = phrasePos[i] - phrasePos[i-1]
-            spread = spread + phrasePosDiff[i]
-
         
         for i in range(0,len(phraseWeight)):
             #Check if AVG and SD from training data exists
-            if phrasePosDiffAvgSd[i][1] is not 0:
-                phraseDistMod = abs(phrasePosDiff[i] - phrasePosDiffAvgSd[0]) / phrasePosDiffAvgSd[1]
-                slrMod = abs((spread / usrinputlength) - slrAVG) / slrSD
+            if slrAVG is not -1:
+                phraseDistMod = abs(phrasePosDiff[i] - phrasePosDiffAvgSd[i][0]) / phrasePosDiffAvgSd[i][1]
+                slr = this.data.GetSumOfList(phrasePosDiff) / usrinputlength
+                slrMod = abs(slr - slrAVG) / slrSD
                 outlineScore = outlineScore + phraseWeight[i] * phraseDistMod * slrMod #sum [phraseWeight] with modifiers to get total score
             #No training data exists. Calculate according to distance away.
             else: 
