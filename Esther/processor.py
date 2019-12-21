@@ -183,16 +183,98 @@ class Processor():
         for i in range(1,len(phrasePos)): #index 0 is always value 0, so start loop from 1.
             phrasePosDiff[i] = phrasePos[i] - phrasePos[i-1]
         
+        #Calculating phraseDistMod for each phrase
         for i in range(0,len(phraseWeight)):
+
             #Check if AVG and SD from training data exists
             if slrAVG is not -1:
-                phraseDistMod = abs(phrasePosDiff[i] - phrasePosDiffAvgSd[i][0]) / phrasePosDiffAvgSd[i][1]
-                slr = this.data.GetSumOfList(phrasePosDiff) / usrinputlength
-                slrMod = abs(slr - slrAVG) / slrSD
-                outlineScore = outlineScore + phraseWeight[i] * phraseDistMod * slrMod #sum [phraseWeight] with modifiers to get total score
-            #No training data exists. Calculate according to distance away.
-            else: 
-                outlineScore = outlineScore + (phraseWeight[i] - (phrasePosDiff[i] * 0.06))
+
+                #Index 0: Only phraseweight
+                #Index 1 onwards: Phraseweight and phraseDistMod (sd/avg)
+                if i == 0:
+                    print("----------First Phrase------------")
+                    print ("old outline is: ", outlineScore) 
+                    print("phraseweight: ", phraseWeight[i])
+                    outlineScore = outlineScore + phraseWeight[i]
+                    print ("result outline is: ", outlineScore) 
+                    print("----------------------")
+                else:
+                    print("----------Subsequent Phrase------------")
+                    print ("phrasePosDiff is: ", phrasePosDiff[i]) 
+                    print("phrasePosAvg: ", phrasePosDiffAvgSd[i][0])
+                    print("phrasePosSd: ", phrasePosDiffAvgSd[i][1])
+                    #phraseDistMod = abs(phrasePosDiff[i] - phrasePosDiffAvgSd[i][0]) / phrasePosDiffAvgSd[i][1]
+                    #outlineScore = outlineScore + phraseWeight[i] * phraseDistMod
+
+                    #How to use AVG and SD
+                    #All values within the range AVG+SD : AVG-SD recieve 0 distance penalty.
+                    #All values that fall outside that range will recieve penalty, starting from 0 up to infinity
+
+                    if phrasePosDiffAvgSd[i][0] - phrasePosDiffAvgSd[i][1] <= phrasePosDiff[i] <= phrasePosDiffAvgSd[i][0] + phrasePosDiffAvgSd[i][1]:
+                        print ("No penalty cos phraseposdiff is in range of the SDs") 
+                        print ("old outline is: ", outlineScore) 
+                        print("phraseweight: ", phraseWeight[i])
+                        outlineScore = outlineScore + phraseWeight[i] #No penalty in range
+                        print ("result outline is: ", outlineScore) 
+                    else:
+                        #Calculate how far out of the range value is
+                        amountOut = 0
+                        if phrasePosDiff[i] > phrasePosDiffAvgSd[i][0]:
+                            #If phraseposdiff is at the right side, bigger that AVG + SD
+                            amountOut = phrasePosDiff[i] - (phrasePosDiffAvgSd[i][0] + phrasePosDiffAvgSd[i][1])
+                        else:
+                            #If phraseposdiff is at the left side, smaller that AVG - SD
+                            amountOut = (phrasePosDiffAvgSd[i][0] - phrasePosDiffAvgSd[i][1]) - phrasePosDiff[i]
+
+                        #distmod = amountOut / SD * 100
+                        phraseDistMod = amountOut / phrasePosDiffAvgSd[i][1] * 100
+
+                        #apply penalty to the phrase then add it to outlinescore
+                        print ("No penalty cos phraseposdiff is in range of the SDs") 
+                        print ("old outline is: ", outlineScore) 
+                        print("phraseweight: ", phraseWeight[i])
+                        print ("phraseDistMod is: ", phraseDistMod) 
+                        outlineScore = outlineScore + phraseWeight[i] * phraseDistMod
+
+                        print ("result outline is: ", outlineScore) 
+                        print("----------------------")
+            else:
+                #No training data exists. Calculate according to distance away.
+                 outlineScore = outlineScore + (phraseWeight[i] - (phrasePosDiff[i] * 0.06))
+                 print ("NO TRAINING DATA. Doing default dist away calculations.")
+                 print ("result outline is: ", outlineScore) 
+        #Calculating slrMod for entire outline
+        print("----------Calculating SLR after phrases------------")
+        print ("old outline is: ", outlineScore) 
+        
+        slr = this.data.GetSumOfList(phrasePosDiff) / usrinputlength
+        print("slr: ", slr)
+        print("slrAVG: ", slrAVG)
+        print("slrSD: ", slrSD)
+
+        #If slr is out of SD range, apply penalty. If not, ignore and leave alone.
+        if slrAVG - slrSD > slr > slrAVG + slrSD:
+
+            #Calculate how much out of the range slr is
+            amountOut = 0
+            if slr > slrAVG:
+                #If slr is at the right side, bigger that AVG + SD
+                amountOut = slr - (slrAVG + slrSD)
+            else:
+                #If slr is at the left side, smaller that AVG - SD
+                amountOut = slr - (slrAVG - slrSD)
+            print("amountOut: ", amountOut)
+
+            #slrMod = amountOut / SD * 100 | 10/10 useful comment
+            slrMod = amountOut / slrSD * 100
+            print("slrMod: ", slrMod)
+
+            #Apply slrMod to entire outline
+            outlineScore = outlineScore * slrMod
+            print ("result outline is: ", outlineScore) 
+            print("----------------------")
+        else:
+            print ("No penalty cos slr is in range of the SDs") 
 
         print ("Score for this outline: " + str(outlineScore))
         return outlineScore
