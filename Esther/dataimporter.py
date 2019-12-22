@@ -43,7 +43,7 @@ class DataImporter():
                             #No [x] number found, putting default phraseweight as 1
                             phraseWeight.append(1)
                             phrasesCleaned.append(phrase)
-                    this.AddOutline(filename,phrasesCleaned,phraseWeight)
+                    this.AddOutline(filename.replace(".txt",""),phrasesCleaned,phraseWeight)
                     print ("Adding outline intentname: " + filename)
                     print ("Adding outline phrases: " + str(phrases))
                     print ("Adding outline phraseWeight: " + str(phraseWeight))
@@ -206,32 +206,3 @@ class DataImporter():
             return 1 #if the average is 0, sd should be 0 also (ignoring the fact that the formula cannot handle 0)
             #BUT, if SD is less than 1, the penalty would be too great cos the minimum words away would be 1.
             #SO, cap SD at 1.
-
-    def BackupOutlines():
-        this.AddOutline("ask_time", ["what","time"],(1,2))
-        this.AddOutline("ask_time", ["give","time"],(1,2))
-        this.AddOutline("ask_time", ["tell","me","time"],(1,1,2))
-        this.AddOutline("ask_time", ["need","time"],(1,2))
-        this.AddOutline("ask_time", ["do","know","time"],(1,1,2))
-        this.AddOutline("ask_time", ["have","current","time"],(1,1,2))
-
-        this.AddOutline("ask_if_faggot", ("are","you","faggot"),(0.1,0.2,2))
-        this.AddOutline("ask_if_faggot", ("hello","you","faggot"),(0.5,0.2,2))
-
-        this.AddOutline("ask_day", ["what","day","!daysrelative"],(1,2,2))
-        this.AddOutline("ask_day", ["what","day","is","it"],(1,2,1.5,1.5))
-        this.AddOutline("ask_day", ["give","me","day","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_day", ["tell","me","day","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_day", ["need","day","!daysrelative"],(1,2,2))
-
-        this.AddOutline("ask_date", ["what","date","!daysrelative"],(1,2,2))
-        this.AddOutline("ask_date", ["give","me","date","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_date", ["tell","me","date","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_date", ["need","date","!daysrelative"],(1,2,2))
-
-        this.AddOutline("ask_date", ["what","date","is","!days"],(1,2,1,2))
-        this.AddOutline("ask_date", ["what","date","on","!days"],(1,2,1,2))
-        this.AddOutline("ask_date", ["give","me","date","!days"],(1,1,2,2))
-        this.AddOutline("ask_date", ["need","date","!days"],(1,2,2))
-
-        this.AddOutline("ask_date_day", ["need","date","!daysrelative","!days"],(1,2,2,2))
