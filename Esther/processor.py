@@ -106,15 +106,20 @@ class Processor():
         print ("Final Results: " + str(scores))
 
         #Search for highest score
-        highestScore = -1
         highestKey = ""
 
         for key, value in scores.items():
-            if value[0] > highestScore:
-                highestScore = value[0]
+            if highestKey == "":
+                #First item in loop
                 highestKey = key
+            else:
+                #If number of phrases in value > number of phrases in highest key
+                if len(value[2]) >= len(scores[highestKey][2]):
+                    #If number of phrases in value > number of phrases in highest key
+                    if value[0] >= scores[highestKey][0]:
+                        highestKey = key
 
-        if highestScore != -1:
+        if highestKey != "":
             print ("Intent chosen: \"" + highestKey + "\" with values: "+ str(scores[highestKey]))
             #Update training data for matches.
 
