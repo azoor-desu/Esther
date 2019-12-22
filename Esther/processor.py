@@ -57,7 +57,7 @@ class Processor():
 
         #Create a dict for score sorting
         #Format:
-        #scores[0] = "intentName": (scoreValue, [("entityType1","entityValue1") , ("enitityType2", "entityValue2")], [phrases], [phrasePos], usrinputlength)
+        #scores[0] = "phrases together": (scoreValue, [(entityType)], [phrases], [phrasePos], usrinputlength, intentName)
         scores = {}
 
         #Iterate every word in user sentence
@@ -95,29 +95,36 @@ class Processor():
                     #add all scores together
                     
                     outlineScore = this.CalculateOutlineScore(phrasePos, nestedOutline, len(usrinput))
-                    
-                    #if scores alr exists, use the higher score
-                    if nestedOutline[0] in scores:
-                        if scores[nestedOutline[0]][0] < outlineScore:
-                            scores[nestedOutline[0]] = (outlineScore,extractedEntities, nestedOutline[1], phrasePos, len(usrinput))
-                    else:
-                        scores.setdefault(nestedOutline[0],(outlineScore,extractedEntities, nestedOutline[1], phrasePos, len(usrinput)))
+                    scores.setdefault(this.CombineStringsList(nestedOutline[1]),(outlineScore,extractedEntities, nestedOutline[1], phrasePos, len(usrinput), nestedOutline[0]))
 
         print ("Final Results: " + str(scores))
 
         #Search for highest score
         highestKey = ""
 
+        print ("---------------Sorting score--------------------")
         for key, value in scores.items():
             if highestKey == "":
                 #First item in loop
                 highestKey = key
+                print ("First outline set: \"" + highestKey + "\" with values: "+ str(scores[highestKey]))
             else:
                 #If number of phrases in value > number of phrases in highest key
-                if len(value[2]) >= len(scores[highestKey][2]):
+                print ("Highestkey stats:")
+                print ("Highestkey: " + highestKey)
+                print ("HighestKey phrase length: " + str(len(scores[highestKey][2])))
+                print ("Challenger stats:")
+                print ("Challenger key: " + key)
+                print ("Challenger phrase length: " + str(len(value[2])))
+                if len(value[2]) > len(scores[highestKey][2]):
                     #If number of phrases in value > number of phrases in highest key
-                    if value[0] >= scores[highestKey][0]:
-                        highestKey = key
+                    highestKey = key
+                    print ("OH SHIT CHALLENGER HAS WON!!!!!!!!!!!!!\n-------------------------")
+                elif value[0] > scores[highestKey][0]:
+                    highestKey = key
+                    print ("OH SHIT CHALLENGER HAS BARELY WON!!!!!!!!!!!!!\n-------------------------")
+                else:
+                    print ("Aww challenger lost....")
 
         if highestKey != "":
             print ("Intent chosen: \"" + highestKey + "\" with values: "+ str(scores[highestKey]))
@@ -283,3 +290,12 @@ class Processor():
 
         print ("Score for this outline: " + str(outlineScore))
         return outlineScore
+
+    def CombineStringsList(this, inputlist):
+        combined = ""
+        for item in inputlist:
+            if combined != "":
+                combined = combined + " " + item
+            else:
+                combined = item
+        return combined

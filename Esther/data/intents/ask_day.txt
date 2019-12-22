@@ -1,0 +1,8 @@
+what day[2]
+what day[2] !daysrelative[2]
+give me day[2]
+give me day[2] !daysrelative[2]
+tell me day[2]
+tell me day[2] !daysrelative[2]
+need day[2]
+need day[2] !daysrelative[2]

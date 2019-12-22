@@ -3,11 +3,16 @@ import Esther
 import json
 
 #APP_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
-TRAIN_PATH = "data/training.json"
+cwd = os.getcwd()
+TRAIN_PATH = os.path.join(cwd,"data","training.json")
+INTENT_PATH = os.path.join(cwd,"data","intents")
+SYNONYMS_PATH = "data/synonyms/"
+ENTITIES_PATH = "data/entities/"
 
 class DataImporter():
     # "outline key": [([phrasePosDiff], usrinputlength)]
     trainingdata = {}
+    outlines = {}
 
     def PopulateOutlinesDict(this):
         print ("DataImporter: Loading Training Data...")
@@ -15,43 +20,49 @@ class DataImporter():
         print ("DataImporter: Finished loading Training Data")
 
         print ("DataImporter: Loading intent outlines from disk...")
-        #DO LOADING. Load each txt file.
-        #Sort data into the format below.
-        #For each outline, search the trainingdata for e.g. "what time" as a key.
-        #If key is found, calculate the relevant data and plonk it into AddOutline. If not, default values.
-        #Plonk in phraseWeight data along as well.
 
-        this.outlines = {}
-
-        this.AddOutline("ask_time", ["what","time"],(1,2))
-        this.AddOutline("ask_time", ["give","time"],(1,2))
-        this.AddOutline("ask_time", ["tell","me","time"],(1,1,2))
-        this.AddOutline("ask_time", ["need","time"],(1,2))
-        this.AddOutline("ask_time", ["do","know","time"],(1,1,2))
-        this.AddOutline("ask_time", ["have","current","time"],(1,1,2))
-
-        this.AddOutline("ask_if_faggot", ("are","you","faggot"),(0.1,0.2,2))
-        this.AddOutline("ask_if_faggot", ("hello","you","faggot"),(0.5,0.2,2))
-
-        this.AddOutline("ask_day", ["what","day","!daysrelative"],(1,2,2))
-        this.AddOutline("ask_day", ["what","day","is","it"],(1,2,1.5,1.5))
-        this.AddOutline("ask_day", ["give","me","day","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_day", ["tell","me","day","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_day", ["need","day","!daysrelative"],(1,2,2))
-
-        this.AddOutline("ask_date", ["what","date","!daysrelative"],(1,2,2))
-        this.AddOutline("ask_date", ["give","me","date","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_date", ["tell","me","date","!daysrelative"],(1,1,2,2))
-        this.AddOutline("ask_date", ["need","date","!daysrelative"],(1,2,2))
-
-        this.AddOutline("ask_date", ["what","date","is","!days"],(1,2,1,2))
-        this.AddOutline("ask_date", ["what","date","on","!days"],(1,2,1,2))
-        this.AddOutline("ask_date", ["give","me","date","!days"],(1,1,2,2))
-        this.AddOutline("ask_date", ["need","date","!days"],(1,2,2))
-
-        this.AddOutline("ask_date_day", ["need","date","!daysrelative","!days"],(1,2,2,2))
-
+        if os.path.exists(INTENT_PATH):
+            fileDirectories = filter(lambda x: x[-4:] == '.txt', os.listdir(INTENT_PATH))
+            for filename in fileDirectories:
+                #strip and split ReadTxtFile at the same time.
+                intentTextArray = [x.strip() for x in this.ReadTxtFile(os.path.join(INTENT_PATH,filename)).split('\n')]
+                #Shovel each line of intentText into an outline entry
+                for outlineRaw in intentTextArray:
+                    phrases = [x.strip() for x in outlineRaw.split(' ')]
+                    phraseWeight =[]
+                    phrasesCleaned=[] #add version without the [] at the back of the phrase
+                    #add phraseweight
+                    for phrase in phrases:
+                        if '[' in phrase and ']' in phrase:
+                            #split the string by [ and ], by replacing ] with [, then split all by ['s
+                            phraseSplit = phrase.replace(']','[').split('[')
+                            number = phraseSplit[1]
+                            phrasesCleaned.append(phraseSplit[0]) #add version without the [] at the back of the phrase
+                            phraseWeight.append(float(number))
+                        else:
+                            #No [x] number found, putting default phraseweight as 1
+                            phraseWeight.append(1)
+                            phrasesCleaned.append(phrase)
+                    this.AddOutline(filename,phrasesCleaned,phraseWeight)
+                    print ("Adding outline intentname: " + filename)
+                    print ("Adding outline phrases: " + str(phrases))
+                    print ("Adding outline phraseWeight: " + str(phraseWeight))
+            print ("DataImporter: Reading intent outlines data finished")
+        else:
+            print ("DataImporter: WARNING! Disk intent outlines folder is not found. Not loading any outlines!")
         return this.outlines
+
+    def ReadTxtFile(this, filepath):
+        with open(filepath, 'r') as fd:
+            stringg = fd.read()
+        return stringg
+
+    def isNumber(s):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
 
     def AddOutline (this, intentName, phrases, phraseWeight):
     #outline structure
@@ -126,7 +137,6 @@ class DataImporter():
             print ("DataImporter: NOTICE! Disk training data is not found. Creating blank training data file.")
         #print (str(this.trainingdata))
 
-    
     def UpdateTrainingData(this, phrases, phrasePos, usrinputlength):
     # trainingdata structure:
     # "outline key":
@@ -165,7 +175,6 @@ class DataImporter():
             json.dump(this.trainingdata,fp, sort_keys=True)
         print ("DataImporter: Writing data completed.")
 
-    #For calculation and other misc purposes
     def CombineStringsList(this, inputlist):
         combined = ""
         for item in inputlist:
@@ -197,3 +206,32 @@ class DataImporter():
             return 1 #if the average is 0, sd should be 0 also (ignoring the fact that the formula cannot handle 0)
             #BUT, if SD is less than 1, the penalty would be too great cos the minimum words away would be 1.
             #SO, cap SD at 1.
+
+    def BackupOutlines():
+        this.AddOutline("ask_time", ["what","time"],(1,2))
+        this.AddOutline("ask_time", ["give","time"],(1,2))
+        this.AddOutline("ask_time", ["tell","me","time"],(1,1,2))
+        this.AddOutline("ask_time", ["need","time"],(1,2))
+        this.AddOutline("ask_time", ["do","know","time"],(1,1,2))
+        this.AddOutline("ask_time", ["have","current","time"],(1,1,2))
+
+        this.AddOutline("ask_if_faggot", ("are","you","faggot"),(0.1,0.2,2))
+        this.AddOutline("ask_if_faggot", ("hello","you","faggot"),(0.5,0.2,2))
+
+        this.AddOutline("ask_day", ["what","day","!daysrelative"],(1,2,2))
+        this.AddOutline("ask_day", ["what","day","is","it"],(1,2,1.5,1.5))
+        this.AddOutline("ask_day", ["give","me","day","!daysrelative"],(1,1,2,2))
+        this.AddOutline("ask_day", ["tell","me","day","!daysrelative"],(1,1,2,2))
+        this.AddOutline("ask_day", ["need","day","!daysrelative"],(1,2,2))
+
+        this.AddOutline("ask_date", ["what","date","!daysrelative"],(1,2,2))
+        this.AddOutline("ask_date", ["give","me","date","!daysrelative"],(1,1,2,2))
+        this.AddOutline("ask_date", ["tell","me","date","!daysrelative"],(1,1,2,2))
+        this.AddOutline("ask_date", ["need","date","!daysrelative"],(1,2,2))
+
+        this.AddOutline("ask_date", ["what","date","is","!days"],(1,2,1,2))
+        this.AddOutline("ask_date", ["what","date","on","!days"],(1,2,1,2))
+        this.AddOutline("ask_date", ["give","me","date","!days"],(1,1,2,2))
+        this.AddOutline("ask_date", ["need","date","!days"],(1,2,2))
+
+        this.AddOutline("ask_date_day", ["need","date","!daysrelative","!days"],(1,2,2,2))

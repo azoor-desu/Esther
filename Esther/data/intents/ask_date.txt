@@ -1,0 +1,13 @@
+what date[2]
+what date[2] is it
+what date[2] !daysrelative[2]
+what date[2] !days[2]
+give me date[2]
+give me date[2] !daysrelative[2]
+give me date[2] !days[2]
+tell me date[2]
+tell me date[2] !daysrelative[2]
+tell me date[2] !days[2]
+need date[2]
+need date[2] !daysrelative[2]
+need date[2] !days[2]
