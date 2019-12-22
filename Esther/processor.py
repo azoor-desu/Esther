@@ -26,7 +26,7 @@ class Processor():
         this.synonyms.setdefault("require","need")
         this.synonyms.setdefault("pc","computer")
         this.synonyms.setdefault("rig","computer")
-        this.synonyms.setdefault("battlestation","computer")
+        this.synonyms.setdefault("battle station","computer")
 
         this.entities.setdefault("!days",["monday","tuesday","wednesday","thursday","friday","saturday","sunday"])
         this.entities.setdefault("!daysrelative",["yesterday","today","tomorrow"])
@@ -136,7 +136,13 @@ class Processor():
 
     def FormatUsrinput(this, _usrinput):
         #clean up the user input. Remove all punctuations, leaving only . - and '
-        tempusrinput = re.sub('[`~!@#$^&*()_+=[{}}\|:;<,>?/"]','',_usrinput).lower().split(' ')
+        tempusrinput = re.sub('[`~!@#$^&*()_+=[{}}\|:;<,>?/"]','',_usrinput).lower()
+
+        #Replace synonyms before splitting
+        for key, value in this.synonyms.items():
+            if key in tempusrinput:
+                tempusrinput = tempusrinput.replace(key,value)
+        tempusrinput = tempusrinput.split(' ')
         usrinput = []
 
         #split the 's and 'nt away.
@@ -150,11 +156,8 @@ class Processor():
 
         #remove fullstop at end if any
         for i in range(0,len(usrinput)):
-            if usrinput[i][len(usrinput[i])-1] == '.':
+            if len(usrinput[i]) > 0 and usrinput[i][len(usrinput[i])-1] == '.':
                 usrinput[i] = usrinput[i][:-1]
-            #replace all synonyms
-            if usrinput[i] in this.synonyms:
-                usrinput[i] = this.synonyms[usrinput[i]]
         return usrinput
     
     def SetPhrasePos(this, i, usrinput, nestedOutline, phrasePos, requestedEntities, extractedEntities, requestedEntityToRemove):
