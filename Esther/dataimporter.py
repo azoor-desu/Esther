@@ -1,6 +1,7 @@
 import os
 import Esther
 import json
+import textout
 
 #APP_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
 cwd = os.getcwd()
@@ -15,18 +16,17 @@ class DataImporter():
     outlines = {}
 
     #--------------------TRAINING DATA--------------------------
-
     #loads existing json file into trainingdata dict
     def PopulateTrainingData(this):
-        print ("DataImporter: Loading Training Data...")
+        textout.SystemPrint ("DataImporter: Loading Training Data...")
         
-        print ("DataImporter: Reading disk training data")
+        textout.SystemPrint ("DataImporter: Reading disk training data")
         if os.path.exists(TRAIN_PATH):
             with open (TRAIN_PATH,'r') as fp:
                 this.trainingdata = json.load(fp)
-            print ("DataImporter: Training data loaded!")
+            textout.SystemPrint ("DataImporter: Training data loaded!")
         else:
-            print ("DataImporter: NOTICE! Disk training data is not found. Creating blank training data file.")
+            textout.SystemPrint ("DataImporter: NOTICE! Disk training data is not found. Creating blank training data file.")
 
     def UpdateTrainingData(this, phrases, phrasePos, usrinputlength):
     # trainingdata structure:
@@ -47,31 +47,31 @@ class DataImporter():
             phrasePosDiff[i] = phrasePos[i] - phrasePos[i-1]
 
         #Make _data
-        _data = (phrasePosDiff,usrinputlength)
+        _data = [phrasePosDiff,usrinputlength]
 
         #_data is in this format: ([phrasePosDiff], usrinputlength)
         if _outlineKey in this.trainingdata:
             if _data not in this.trainingdata[_outlineKey]: #Add data if OUTLINE exists and _data is not in dict yet
+                textout.SystemPrint ("DataImporter/UpdateTrainingData(): Data does not exist, adding!")
                 this.trainingdata[_outlineKey].append(_data)
             else:
-                print ("DataImporter/UpdateTrainingData(): Data already exists.")
+                textout.SystemPrint ("DataImporter/UpdateTrainingData(): Data already exists.")
         else:
             this.trainingdata.setdefault(_outlineKey,[]) #If key does not exist, create one and add the data to it.
             this.trainingdata[_outlineKey].append(_data)
         this.WriteTrainingData()
 
     def WriteTrainingData(this):
-        print ("DataImporter: Writing training data")
+        textout.SystemPrint ("DataImporter: Writing training data")
         with open (TRAIN_PATH,'w') as fp:
             json.dump(this.trainingdata,fp, sort_keys=True)
-        print ("DataImporter: Writing data completed.")
+        textout.SystemPrint ("DataImporter: Writing data completed.")
 
     #-------------------------OUTLINES---------------------------
-
     #REQUIRES TRAINING DATA TO BE LOADED FIRST.
     def PopulateOutlinesDict(this):
 
-        print ("DataImporter: Loading intent outlines from disk...")
+        textout.SystemPrint ("DataImporter: Loading intent outlines from disk...")
 
         if os.path.exists(INTENT_PATH):
             fileDirectories = filter(lambda x: x[-4:] == '.txt', os.listdir(INTENT_PATH))
@@ -96,12 +96,9 @@ class DataImporter():
                             phraseWeight.append(1)
                             phrasesCleaned.append(phrase)
                     this.AddOutline(filename.replace(".txt",""),phrasesCleaned,phraseWeight)
-                    print ("Adding outline intentname: " + filename.replace(".txt",""))
-                    print ("Adding outline phrases: " + str(phrases))
-                    print ("Adding outline phraseWeight: " + str(phraseWeight))
-            print ("DataImporter: Intent outlines loaded!")
+            textout.SystemPrint ("DataImporter: Intent outlines loaded!")
         else:
-            print ("DataImporter: WARNING! Intent outlines folder is not found. Not loading any outlines!")
+            textout.SystemWarning ("DataImporter: WARNING! Intent outlines folder is not found. Not loading any outlines!")
         return this.outlines
 
     def ReadTxtFile(this, filepath):
@@ -145,12 +142,12 @@ class DataImporter():
                     phraseValues.append(item[0][i])
 
                 phraseLists.append(phraseValues)
-            print ("PHRASELISTS: " + str(phraseLists))
+            textout.Print ("PHRASELISTS: " + str(phraseLists))
 
             phrasePosDiffAvgSd = []
             for item in phraseLists:
                 phrasePosDiffAvgSd.append((this.GetAvgOfList(item), this.GetSDOfList(item)))
-            print ("\n\n" + str(phrasePosDiffAvgSd) + "\n\n")
+            textout.Print ("\n\n" + str(phrasePosDiffAvgSd) + "\n\n")
             #Getting slrAVG and slrSD
             #Create list with all the slr values
             slr = []
@@ -174,7 +171,7 @@ class DataImporter():
     #------------------------SYNONYMS & ENTITIES IMPORTING----------------------------
     def PopulateSynonymsDict(this):
         synonyms = {}
-        print ("DataImporter: Loading synonyms from disk...")
+        textout.SystemPrint ("DataImporter: Loading synonyms from disk...")
 
         if os.path.exists(SYNONYMS_PATH):
             fileDirectories = filter(lambda x: x[-4:] == '.txt', os.listdir(SYNONYMS_PATH))
@@ -185,13 +182,13 @@ class DataImporter():
                 for dictEntry in synonymTextArray:
                     phrases = [x.strip() for x in dictEntry.split(':')]
                     synonyms.setdefault(phrases[0],phrases[1])
-            print ("DataImporter: Synonyms data loaded")
+            textout.SystemPrint ("DataImporter: Synonyms data loaded")
         else:
-            print ("DataImporter: WARNING! Synonyms folder is not found. Not loading any synonyms!")
+            textout.SystemWarning ("DataImporter: WARNING! Synonyms folder is not found. Not loading any synonyms!")
         return synonyms
 
     def PopulateEntitiesDict(this): #WORK IN PROGRESS, going to work on multipl eword entity entries.
-        print ("DataImporter: Loading entities from disk...")
+        textout.SystemPrint ("DataImporter: Loading entities from disk...")
 
         if os.path.exists(INTENT_PATH):
             fileDirectories = filter(lambda x: x[-4:] == '.txt', os.listdir(INTENT_PATH))
@@ -216,13 +213,14 @@ class DataImporter():
                             phraseWeight.append(1)
                             phrasesCleaned.append(phrase)
                     this.AddOutline(filename.replace(".txt",""),phrasesCleaned,phraseWeight)
-                    print ("Adding outline intentname: " + filename.replace(".txt",""))
-                    print ("Adding outline phrases: " + str(phrases))
-                    print ("Adding outline phraseWeight: " + str(phraseWeight))
-            print ("DataImporter: Intent outlines loaded!")
+                    textout.SystemPrint ("Adding outline intentname: " + filename.replace(".txt",""))
+                    textout.SystemPrint ("Adding outline phrases: " + str(phrases))
+                    textout.SystemPrint ("Adding outline phraseWeight: " + str(phraseWeight))
+            textout.SystemPrint ("DataImporter: Intent outlines loaded!")
         else:
-            print ("DataImporter: WARNING! Intent outlines folder is not found. Not loading any outlines!")
+            textout.SystemWarning ("DataImporter: WARNING! Intent outlines folder is not found. Not loading any outlines!")
         return this.outlines
+
     #------------------------------MISC----------------------------------
 
     def CombineStringsList(this, inputlist):
@@ -264,4 +262,3 @@ class DataImporter():
             return True
         except ValueError:
             return False
-        print ("")
