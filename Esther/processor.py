@@ -130,7 +130,7 @@ class Processor():
 
             #scores[0] IS TEMPORARY. scores[0] == top probability. 
             #scores[x][2] = phrases | scores[x][3] = phrasePos  | scores[x][4] = usrinputlength 
-            this.data.UpdateTrainingData(scores[highestKey][2], scores[highestKey][3], scores[highestKey][4])
+            this.data.UpdateTrainingData(scores[highestKey][2], scores[highestKey][3], scores[highestKey][4], this.outlines)
         print ("")
 
     def FormatUsrinput(this, _usrinput):
@@ -223,6 +223,7 @@ class Processor():
                     textout.Print ("phrasePosDiff is: " + str(phrasePosDiff[i]) )
                     textout.Print("phrasePosAvg: " + str(phrasePosDiffAvgSd[i][0]))
                     textout.Print("phrasePosSd: " + str(phrasePosDiffAvgSd[i][1]))
+                    textout.Print("----------------------")
                     #phraseDistMod = abs(phrasePosDiff[i] - phrasePosDiffAvgSd[i][0]) / phrasePosDiffAvgSd[i][1]
                     #outlineScore = outlineScore + phraseWeight[i] * phraseDistMod
 
@@ -235,7 +236,8 @@ class Processor():
                         textout.Print ("old outline is: " + str(outlineScore))
                         textout.Print("phraseweight: " + str(phraseWeight[i]))
                         outlineScore = outlineScore + phraseWeight[i] #No penalty in range
-                        textout.Print ("result outline is: " + str(outlineScore) )
+                        textout.Print ("result outline is: " + str(outlineScore))
+                        textout.Print("----------------------")
                     else:
                         #Calculate how far out of the range value is
                         amountOut = 0
@@ -246,9 +248,9 @@ class Processor():
                             #If phraseposdiff is at the left side, smaller that AVG - SD
                             amountOut = (phrasePosDiffAvgSd[i][0] - phrasePosDiffAvgSd[i][1]) - phrasePosDiff[i]
 
-                        #distmod = amountOut / SD * 100
-                        if phrasePosDiffAvgSd[i][1] != 0: #sometimes SD can be 0 because the godamn program keeps saving repeated entries.
-                            phraseDistMod = amountOut / phrasePosDiffAvgSd[i][1] * 100
+                        #phraseDistMod = amountOut / SD * 100
+                        if phrasePosDiffAvgSd[i][1] != 0: #prevent divide by zero error if program saves repeated entries
+                            phraseDistMod = amountOut / phrasePosDiffAvgSd[i][1]
                         else:
                             #If SD is 0, leave phraseDistMod as default 1.
                             phraseDistMod = 1
@@ -256,7 +258,7 @@ class Processor():
                             textout.SystemWarning("Please check training data for outline: " + str(nestedOutline[0]))
 
                         #apply penalty to the phrase then add it to outlinescore
-                        textout.Print ("No penalty cos phraseposdiff is in range of the SDs") 
+                        textout.Print ("Apply penalty cos phraseposdiff is out of range of the SDs") 
                         textout.Print ("old outline is: "+ str(outlineScore))
                         textout.Print("phraseweight: "+ str(phraseWeight[i]))
                         textout.Print ("phraseDistMod is: "+ str( phraseDistMod))

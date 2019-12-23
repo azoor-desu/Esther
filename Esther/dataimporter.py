@@ -11,11 +11,12 @@ SYNONYMS_PATH = os.path.join(cwd,"data","synonyms")
 ENTITIES_PATH = os.path.join(cwd,"data","entities")
 
 class DataImporter():
-    # "outline key": [([phrasePosDiff], usrinputlength)]
     trainingdata = {}
     outlines = {}
 
     #--------------------TRAINING DATA--------------------------
+    # "outline key": [([phrasePosDiff], usrinputlength)]
+
     #loads existing json file into trainingdata dict
     def PopulateTrainingData(this):
         textout.SystemPrint ("DataImporter: Loading Training Data...")
@@ -28,10 +29,7 @@ class DataImporter():
         else:
             textout.SystemPrint ("DataImporter: NOTICE! Disk training data is not found. Creating blank training data file.")
 
-    def UpdateTrainingData(this, phrases, phrasePos, usrinputlength):
-    # trainingdata structure:
-    # "outline key":
-    # [([phrasePosDiff], usrinputlength)]
+    def UpdateTrainingData(this, phrases, phrasePos, usrinputlength, outlines):
     #Try to add data into the trainingdata dict, from processor.py when a match is found.
 
         #need to convert: 
@@ -54,13 +52,17 @@ class DataImporter():
             if _data not in this.trainingdata[_outlineKey]: #Add data if OUTLINE exists and _data is not in dict yet
                 textout.SystemPrint ("DataImporter/UpdateTrainingData(): Data does not exist, adding!")
                 this.trainingdata[_outlineKey].append(_data)
+                this.WriteTrainingData()
+                this.UpdateOutlinesWithTrainingData(outlines)
             else:
                 textout.SystemPrint ("DataImporter/UpdateTrainingData(): Data already exists.")
         else:
+            textout.SystemPrint ("DataImporter/UpdateTrainingData(): Data does not exist, adding!")
             this.trainingdata.setdefault(_outlineKey,[]) #If key does not exist, create one and add the data to it.
             this.trainingdata[_outlineKey].append(_data)
-        this.WriteTrainingData()
-
+            this.WriteTrainingData()
+            this.UpdateOutlinesWithTrainingData(outlines)
+        
     def WriteTrainingData(this):
         textout.SystemPrint ("DataImporter: Writing training data")
         with open (TRAIN_PATH,'w') as fp:
@@ -68,6 +70,8 @@ class DataImporter():
         textout.SystemPrint ("DataImporter: Writing data completed.")
 
     #-------------------------OUTLINES---------------------------
+    # "phrase[0]" : [("intentName", [phrases], [(phrasePosDiffAVG, phrasePosDiffSD)], [phraseWeight], slrAVG, slrSD)]
+
     #REQUIRES TRAINING DATA TO BE LOADED FIRST.
     def PopulateOutlinesDict(this):
 
@@ -106,19 +110,10 @@ class DataImporter():
             stringg = fd.read()
         return stringg
 
+    #REQUIRES TRAINING DATA TO BE LOADED FIRST.
     def AddOutline (this, intentName, phrases, phraseWeight):
-    #outline structure
-    # "phrase[0]" :
-    #[("intentName", [phrases], [(phrasePosDiffAVG, phrasePosDiffSD)], [phraseWeight], slrAVG, slrSD)]
 
-        #CONVERSION OF PHRASEWEIGHT
-        #phraseWeight is in [1,1,2,1] format, need to convert such that they all add up to 1.
-        totalWeightRaw = 0
-        newPhraseWeight = [0,] * len(phraseWeight)
-        for rawWeight in phraseWeight:
-            totalWeightRaw += rawWeight #get sum of all weights
-        for i in range(0,len(phraseWeight)):
-            newPhraseWeight[i] = (phraseWeight[i] / totalWeightRaw) #set new value into each tuple.
+        newPhraseWeight = this.ConvertPhraseWeight(phraseWeight)
 
         #Assigning AVG and SD values for SLR and phrasePosDiff
         #combine phrases so can search trainingdata dict
@@ -127,46 +122,36 @@ class DataImporter():
         #search for outline in trainingdata.
         if (trainingdatakey in this.trainingdata and len(this.trainingdata[trainingdatakey]) > 3): #make sure there is at least 3 examples.
 
-            #Getting phrasePosDiffAvgSd
+            phrasePosDiffAvgSd = this.GetPhrasePosDiffAvgSdFromTrainingData(trainingdatakey)
+            slr = this.GetSLRFromTrainingData(trainingdatakey)
 
-            #When looping through trainingdata, get all the index 0s of each trainingdata item into one list, index 1s into another etc
-            #Basically change so that each 
-            #trainingdata[0] >> 1, 2, 3 | trainingdata[1] >> 4, 5, 6 | trainingdata[2] >> 7, 8, 9
-            #becomes:
-            #phraseLists[0] >> 1, 4, 7 | phrasePosDiff[1] >>2, 5, 8 | phrasePosDiff[2] >> 3, 6, 9
-            phraseLists = []
-            for i in range(0, len(phrases)):
-                phraseValues = []
-
-                for item in this.trainingdata[trainingdatakey]:
-                    phraseValues.append(item[0][i])
-
-                phraseLists.append(phraseValues)
-            textout.Print ("PHRASELISTS: " + str(phraseLists))
-
-            phrasePosDiffAvgSd = []
-            for item in phraseLists:
-                phrasePosDiffAvgSd.append((this.GetAvgOfList(item), this.GetSDOfList(item)))
-            textout.Print ("\n\n" + str(phrasePosDiffAvgSd) + "\n\n")
-            #Getting slrAVG and slrSD
-            #Create list with all the slr values
-            slr = []
-            for trainingdatavalues in this.trainingdata[trainingdatakey]:
-                slr.append(this.GetSumOfList(trainingdatavalues[0]) / trainingdatavalues[1])
-
+            #add to outlines
             if phrases[0] in this.outlines:
                 this.outlines.get(phrases[0]).append((intentName, phrases, phrasePosDiffAvgSd, newPhraseWeight,this.GetAvgOfList(slr),this.GetSDOfList(slr)))
             else:
                 this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, phrasePosDiffAvgSd, newPhraseWeight,this.GetAvgOfList(slr),this.GetSDOfList(slr)))
 
-            return #Below won't run. Don't generate default blank values.
-
-        #if above if conditions are not fufiled, need to generate default AVG SD values.
-        #GENERATING DEFAULT SD and AVG values
-        if phrases[0] in this.outlines:
-            this.outlines.get(phrases[0]).append((intentName, phrases, [(0,0),] * len(phrases), newPhraseWeight,-1,-1))
         else:
-            this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, [(0,0),] * len(phrases), newPhraseWeight,-1,-1))
+            #if above if conditions are not fufiled, need to generate default AVG SD values.
+            #GENERATING DEFAULT SD and AVG values for both slr and phrasePos
+            if phrases[0] in this.outlines:
+                this.outlines.get(phrases[0]).append((intentName, phrases, [(0,0),] * len(phrases), newPhraseWeight,-1,-1))
+            else:
+                this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, [(0,0),] * len(phrases), newPhraseWeight,-1,-1))
+
+    def UpdateOutlinesWithTrainingData(this, outlines):
+        #Things to change in nestedOutlines: [phrasePosDiffAvgSd] (index 2), slrAVG (index 4), slrSD (index 5)
+        #Run through all training data entries, find corresponding nestedOutline, and re-write that nestedOutline.
+        newOutline = outlines
+        for key, value in this.trainingdata.items():
+            #Find the nestedOutline from outlines.
+            phrases = key.split(' ')
+            for i in range(0,len(outlines[phrases[0]])):
+                if phrases in outlines[phrases[0]][i]:
+                    #Edit nestedoutline
+                    slr = this.GetSLRFromTrainingData(key)
+                    newOutline[phrases[0]][i] = (newOutline[phrases[0]][i][0], newOutline[phrases[0]][i][1], this.GetPhrasePosDiffAvgSdFromTrainingData(key), newOutline[phrases[0]][i][3],this.GetAvgOfList(slr),this.GetSDOfList(slr))
+        return this.outlines
 
     #------------------------SYNONYMS & ENTITIES IMPORTING----------------------------
     def PopulateSynonymsDict(this):
@@ -254,6 +239,47 @@ class DataImporter():
             return 1 #if the average is 0, sd should be 0 also (ignoring the fact that the formula cannot handle 0)
             #BUT, if SD is less than 1, the penalty would be too great cos the minimum words away would be 1.
             #SO, cap SD at 1.
+
+    def GetPhrasePosDiffAvgSdFromTrainingData(this, trainingdatakey):
+        #Getting phrasePosDiffAvgSd
+
+        #phraseLists = Flip the columns and rows of trainingdata
+        #When looping through trainingdata, get all the index 0s of each trainingdata item into one list, index 1s into another etc
+        #Basically change so that each 
+        #trainingdata[0] >> 1, 2, 3 | trainingdata[1] >> 4, 5, 6 | trainingdata[2] >> 7, 8, 9
+        #becomes:
+        #phraseLists[0] >> 1, 4, 7 | phrasePosDiff[1] >>2, 5, 8 | phrasePosDiff[2] >> 3, 6, 9
+        phraseLists = []
+        for i in range(0, len(this.trainingdata[trainingdatakey][0][0])):
+            phraseValues = []
+            for item in this.trainingdata[trainingdatakey]:
+                phraseValues.append(item[0][i])
+            phraseLists.append(phraseValues)
+        #phraseList GET.
+
+        #Finally, calculate the AVG and SD
+        phrasePosDiffAvgSd = []
+        for item in phraseLists:
+            phrasePosDiffAvgSd.append((this.GetAvgOfList(item), this.GetSDOfList(item)))
+        return phrasePosDiffAvgSd
+
+    def GetSLRFromTrainingData(this, trainingdatakey):
+        slr = []
+        for trainingdatavalues in this.trainingdata[trainingdatakey]:
+            #SLR is sentence length ratio
+            #slr = sum of phrasePosDiff / sentence length
+            slr.append(this.GetSumOfList(trainingdatavalues[0]) / trainingdatavalues[1])
+        return slr
+
+    def ConvertPhraseWeight(this, phraseWeight):
+        #phraseWeight is in [1,1,2,1] format, need to convert such that they all add up to 1.
+        totalWeightRaw = 0
+        newPhraseWeight = [0,] * len(phraseWeight)
+        for rawWeight in phraseWeight:
+            totalWeightRaw += rawWeight #get sum of all weights
+        for i in range(0,len(phraseWeight)):
+            newPhraseWeight[i] = (phraseWeight[i] / totalWeightRaw) #set new value into each tuple.
+        return newPhraseWeight
 
     #Check if string is a number anot
     def isNumber(s):
