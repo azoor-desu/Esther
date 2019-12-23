@@ -6,20 +6,70 @@ import json
 cwd = os.getcwd()
 TRAIN_PATH = os.path.join(cwd,"data","training.json")
 INTENT_PATH = os.path.join(cwd,"data","intents")
-SYNONYMS_PATH = "data/synonyms/"
-ENTITIES_PATH = "data/entities/"
+SYNONYMS_PATH = os.path.join(cwd,"data","synonyms")
+ENTITIES_PATH = os.path.join(cwd,"data","entities")
 
 class DataImporter():
     # "outline key": [([phrasePosDiff], usrinputlength)]
     trainingdata = {}
     outlines = {}
 
-    #-------------------OUTLINES-------------------------
+    #--------------------TRAINING DATA--------------------------
 
-    def PopulateOutlinesDict(this):
+    #loads existing json file into trainingdata dict
+    def PopulateTrainingData(this):
         print ("DataImporter: Loading Training Data...")
-        this.PopulateTrainingData()
-        print ("DataImporter: Finished loading Training Data")
+        
+        print ("DataImporter: Reading disk training data")
+        if os.path.exists(TRAIN_PATH):
+            with open (TRAIN_PATH,'r') as fp:
+                this.trainingdata = json.load(fp)
+            print ("DataImporter: Training data loaded!")
+        else:
+            print ("DataImporter: NOTICE! Disk training data is not found. Creating blank training data file.")
+
+    def UpdateTrainingData(this, phrases, phrasePos, usrinputlength):
+    # trainingdata structure:
+    # "outline key":
+    # [([phrasePosDiff], usrinputlength)]
+    #Try to add data into the trainingdata dict, from processor.py when a match is found.
+
+        #need to convert: 
+        #[phrases] >> _outlineKey (string)
+        #[phrasePos] >> [phrasePosDiff]
+
+        #need to convert [phrases] into one single string
+        _outlineKey = this.CombineStringsList(phrases)
+
+        phrasePosDiff = [0,] * len(phrasePos)
+        #need to convert [phrasePos] >> [phrasePosDiff]
+        for i in range(1,len(phrasePos)): #index 0 is always value 0, so start loop from 1.
+            phrasePosDiff[i] = phrasePos[i] - phrasePos[i-1]
+
+        #Make _data
+        _data = (phrasePosDiff,usrinputlength)
+
+        #_data is in this format: ([phrasePosDiff], usrinputlength)
+        if _outlineKey in this.trainingdata:
+            if _data not in this.trainingdata[_outlineKey]: #Add data if OUTLINE exists and _data is not in dict yet
+                this.trainingdata[_outlineKey].append(_data)
+            else:
+                print ("DataImporter/UpdateTrainingData(): Data already exists.")
+        else:
+            this.trainingdata.setdefault(_outlineKey,[]) #If key does not exist, create one and add the data to it.
+            this.trainingdata[_outlineKey].append(_data)
+        this.WriteTrainingData()
+
+    def WriteTrainingData(this):
+        print ("DataImporter: Writing training data")
+        with open (TRAIN_PATH,'w') as fp:
+            json.dump(this.trainingdata,fp, sort_keys=True)
+        print ("DataImporter: Writing data completed.")
+
+    #-------------------------OUTLINES---------------------------
+
+    #REQUIRES TRAINING DATA TO BE LOADED FIRST.
+    def PopulateOutlinesDict(this):
 
         print ("DataImporter: Loading intent outlines from disk...")
 
@@ -49,22 +99,15 @@ class DataImporter():
                     print ("Adding outline intentname: " + filename.replace(".txt",""))
                     print ("Adding outline phrases: " + str(phrases))
                     print ("Adding outline phraseWeight: " + str(phraseWeight))
-            print ("DataImporter: Reading intent outlines data finished")
+            print ("DataImporter: Intent outlines loaded!")
         else:
-            print ("DataImporter: WARNING! Disk intent outlines folder is not found. Not loading any outlines!")
+            print ("DataImporter: WARNING! Intent outlines folder is not found. Not loading any outlines!")
         return this.outlines
 
     def ReadTxtFile(this, filepath):
         with open(filepath, 'r') as fd:
             stringg = fd.read()
         return stringg
-
-    def isNumber(s):
-        try:
-            float(s)
-            return True
-        except ValueError:
-            return False
 
     def AddOutline (this, intentName, phrases, phraseWeight):
     #outline structure
@@ -128,58 +171,59 @@ class DataImporter():
         else:
             this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, [(0,0),] * len(phrases), newPhraseWeight,-1,-1))
 
-    #----------------------------TRAINING DATA-----------------------------
+    #------------------------SYNONYMS & ENTITIES IMPORTING----------------------------
+    def PopulateSynonymsDict(this):
+        synonyms = {}
+        print ("DataImporter: Loading synonyms from disk...")
 
-    #loads existing json file into trainingdata dict
-    def PopulateTrainingData(this):
-        print ("DataImporter: Reading disk training data")
-        if os.path.exists(TRAIN_PATH):
-            with open (TRAIN_PATH,'r') as fp:
-                this.trainingdata = json.load(fp)
-            print ("DataImporter: Reading training data finished")
+        if os.path.exists(SYNONYMS_PATH):
+            fileDirectories = filter(lambda x: x[-4:] == '.txt', os.listdir(SYNONYMS_PATH))
+            for filename in fileDirectories:
+                #strip and split ReadTxtFile at the same time.
+                synonymTextArray = [x.strip() for x in this.ReadTxtFile(os.path.join(SYNONYMS_PATH,filename)).split('\n')]
+                #Shovel each line of synonymTextArray into a dict entry
+                for dictEntry in synonymTextArray:
+                    phrases = [x.strip() for x in dictEntry.split(':')]
+                    synonyms.setdefault(phrases[0],phrases[1])
+            print ("DataImporter: Synonyms data loaded")
         else:
-            print ("DataImporter: NOTICE! Disk training data is not found. Creating blank training data file.")
-        #print (str(this.trainingdata))
+            print ("DataImporter: WARNING! Synonyms folder is not found. Not loading any synonyms!")
+        return synonyms
 
-    def UpdateTrainingData(this, phrases, phrasePos, usrinputlength):
-    # trainingdata structure:
-    # "outline key":
-    # [([phrasePosDiff], usrinputlength)]
-    #Try to add data into the trainingdata dict, from processor.py when a match is found.
+    def PopulateEntitiesDict(this): #WORK IN PROGRESS, going to work on multipl eword entity entries.
+        print ("DataImporter: Loading entities from disk...")
 
-        #need to convert: 
-        #[phrases] >> _outlineKey (string)
-        #[phrasePos] >> [phrasePosDiff]
-
-        #need to convert [phrases] into one single string
-        _outlineKey = this.CombineStringsList(phrases)
-
-        phrasePosDiff = [0,] * len(phrasePos)
-        #need to convert [phrasePos] >> [phrasePosDiff]
-        for i in range(1,len(phrasePos)): #index 0 is always value 0, so start loop from 1.
-            phrasePosDiff[i] = phrasePos[i] - phrasePos[i-1]
-
-        #Make _data
-        _data = (phrasePosDiff,usrinputlength)
-
-        #_data is in this format: ([phrasePosDiff], usrinputlength)
-        if _outlineKey in this.trainingdata:
-            if _data not in this.trainingdata[_outlineKey]: #Add data if OUTLINE exists and _data is not in dict yet
-                this.trainingdata[_outlineKey].append(_data)
-            else:
-                print ("DataImporter/UpdateTrainingData(): Data already exists.")
+        if os.path.exists(INTENT_PATH):
+            fileDirectories = filter(lambda x: x[-4:] == '.txt', os.listdir(INTENT_PATH))
+            for filename in fileDirectories:
+                #strip and split ReadTxtFile at the same time.
+                intentTextArray = [x.strip() for x in this.ReadTxtFile(os.path.join(INTENT_PATH,filename)).split('\n')]
+                #Shovel each line of intentText into an outline entry
+                for outlineRaw in intentTextArray:
+                    phrases = [x.strip() for x in outlineRaw.split(' ')]
+                    phraseWeight =[]
+                    phrasesCleaned=[] #add version without the [] at the back of the phrase
+                    #add phraseweight
+                    for phrase in phrases:
+                        if '[' in phrase and ']' in phrase:
+                            #split the string by [ and ], by replacing ] with [, then split all by ['s
+                            phraseSplit = phrase.replace(']','[').split('[')
+                            number = phraseSplit[1]
+                            phrasesCleaned.append(phraseSplit[0]) #add version without the [] at the back of the phrase
+                            phraseWeight.append(float(number))
+                        else:
+                            #No [x] number found, putting default phraseweight as 1
+                            phraseWeight.append(1)
+                            phrasesCleaned.append(phrase)
+                    this.AddOutline(filename.replace(".txt",""),phrasesCleaned,phraseWeight)
+                    print ("Adding outline intentname: " + filename.replace(".txt",""))
+                    print ("Adding outline phrases: " + str(phrases))
+                    print ("Adding outline phraseWeight: " + str(phraseWeight))
+            print ("DataImporter: Intent outlines loaded!")
         else:
-            this.trainingdata.setdefault(_outlineKey,[]) #If key does not exist, create one and add the data to it.
-            this.trainingdata[_outlineKey].append(_data)
-        this.WriteTrainingData()
-
-    def WriteTrainingData(this):
-        print ("DataImporter: Writing training data")
-        with open (TRAIN_PATH,'w') as fp:
-            json.dump(this.trainingdata,fp, sort_keys=True)
-        print ("DataImporter: Writing data completed.")
-
-    #----------------------------MISC-----------------------------------------
+            print ("DataImporter: WARNING! Intent outlines folder is not found. Not loading any outlines!")
+        return this.outlines
+    #------------------------------MISC----------------------------------
 
     def CombineStringsList(this, inputlist):
         combined = ""
@@ -212,3 +256,12 @@ class DataImporter():
             return 1 #if the average is 0, sd should be 0 also (ignoring the fact that the formula cannot handle 0)
             #BUT, if SD is less than 1, the penalty would be too great cos the minimum words away would be 1.
             #SO, cap SD at 1.
+
+    #Check if string is a number anot
+    def isNumber(s):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
+        print ("")

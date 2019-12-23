@@ -3,7 +3,7 @@ import pkgutil
 import re
 import dataimporter
 
-APP_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+APP_PATH = os.getcwd()
 MOD_PATH = os.path.join(APP_PATH, "modules")
 
 class Processor():
@@ -17,14 +17,11 @@ class Processor():
     def __init__(this):
         print ("Processor: Starting processor initialization" )
         this.data = dataimporter.DataImporter()
+        this.data.PopulateTrainingData()
         this.outlines = this.data.PopulateOutlinesDict()
+        this.synonyms = this.data.PopulateSynonymsDict()
+        #this.entities = this.data.PopulateEntitiesDict()
         this.LoadAllModules()
-
-        #synonyms need to be able to extract multiple words from usrinput and replace them
-        this.synonyms.setdefault("require","need")
-        this.synonyms.setdefault("pc","computer")
-        this.synonyms.setdefault("rig","computer")
-        this.synonyms.setdefault("battle station","computer")
 
         this.entities.setdefault("!days",["monday","tuesday","wednesday","thursday","friday","saturday","sunday"])
         this.entities.setdefault("!daysrelative",["yesterday","today","tomorrow"])
@@ -133,8 +130,8 @@ class Processor():
             this.data.UpdateTrainingData(scores[highestKey][2], scores[highestKey][3], scores[highestKey][4])
 
     def FormatUsrinput(this, _usrinput):
-        #clean up the user input. Remove all punctuations, leaving only . - and '
-        tempusrinput = re.sub("[^\sa-zA-Z.'-]+",'',_usrinput).lower()
+        #clean up the user input. Remove all punctuations, leaving only . - ! and '
+        tempusrinput = re.sub("[^\sa-zA-Z.'!-]+",'',_usrinput).lower()
 
         #Replace synonyms before splitting
         #https://stackoverflow.com/questions/17730788/search-and-replace-with-whole-word-only-option
