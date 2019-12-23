@@ -1,0 +1,3 @@
+usa:america
+united states:america
+united states of america:america

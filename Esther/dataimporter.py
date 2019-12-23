@@ -14,6 +14,8 @@ class DataImporter():
     trainingdata = {}
     outlines = {}
 
+    #-------------------OUTLINES-------------------------
+
     def PopulateOutlinesDict(this):
         print ("DataImporter: Loading Training Data...")
         this.PopulateTrainingData()
@@ -44,7 +46,7 @@ class DataImporter():
                             phraseWeight.append(1)
                             phrasesCleaned.append(phrase)
                     this.AddOutline(filename.replace(".txt",""),phrasesCleaned,phraseWeight)
-                    print ("Adding outline intentname: " + filename)
+                    print ("Adding outline intentname: " + filename.replace(".txt",""))
                     print ("Adding outline phrases: " + str(phrases))
                     print ("Adding outline phraseWeight: " + str(phraseWeight))
             print ("DataImporter: Reading intent outlines data finished")
@@ -126,6 +128,8 @@ class DataImporter():
         else:
             this.outlines.setdefault(phrases[0],[]).append((intentName, phrases, [(0,0),] * len(phrases), newPhraseWeight,-1,-1))
 
+    #----------------------------TRAINING DATA-----------------------------
+
     #loads existing json file into trainingdata dict
     def PopulateTrainingData(this):
         print ("DataImporter: Reading disk training data")
@@ -174,6 +178,8 @@ class DataImporter():
         with open (TRAIN_PATH,'w') as fp:
             json.dump(this.trainingdata,fp, sort_keys=True)
         print ("DataImporter: Writing data completed.")
+
+    #----------------------------MISC-----------------------------------------
 
     def CombineStringsList(this, inputlist):
         combined = ""

@@ -1,0 +1,4 @@
+pc:computer
+rig:computer
+battlestation:computer
+battle station:computer

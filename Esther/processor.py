@@ -18,8 +18,6 @@ class Processor():
         print ("Processor: Starting processor initialization" )
         this.data = dataimporter.DataImporter()
         this.outlines = this.data.PopulateOutlinesDict()
-        print (str(this.outlines))
-
         this.LoadAllModules()
 
         #synonyms need to be able to extract multiple words from usrinput and replace them
@@ -136,23 +134,29 @@ class Processor():
 
     def FormatUsrinput(this, _usrinput):
         #clean up the user input. Remove all punctuations, leaving only . - and '
-        tempusrinput = re.sub('[`~!@#$^&*()_+=[{}}\|:;<,>?/"]','',_usrinput).lower()
+        tempusrinput = re.sub("[^\sa-zA-Z.'-]+",'',_usrinput).lower()
 
         #Replace synonyms before splitting
-        for key, value in this.synonyms.items():
-            if key in tempusrinput:
-                tempusrinput = tempusrinput.replace(key,value)
+        #https://stackoverflow.com/questions/17730788/search-and-replace-with-whole-word-only-option
+        def replace(match):
+            return this.synonyms[match.group(0)]
+        tempusrinput = re.sub('|'.join(r'\b%s\b' % re.escape(s) for s in this.synonyms), 
+        replace, tempusrinput)
+
         tempusrinput = tempusrinput.split(' ')
         usrinput = []
 
-        #split the 's and 'nt away.
+        #split the 's away.
+        #Although most other contractions have been split and dealt with, 's comes with two flavours that cannot be synonymnized:
+        #noun's - everyone's cookies
+        #'s as in is - everyone's dead
         for i in range(0,len(tempusrinput)):
-            if '\'' in tempusrinput[i]:
+            if '\'s' in tempusrinput[i]:
                 splitted = tempusrinput[i].split('\'',1)
                 usrinput.append(splitted[0])
                 usrinput.append("\'" + splitted[1])
             else:
-                usrinput.append(tempusrinput[i])
+                usrinput.append(tempusrinput[i])        
 
         #remove fullstop at end if any
         for i in range(0,len(usrinput)):

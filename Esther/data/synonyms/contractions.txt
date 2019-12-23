@@ -1,0 +1,113 @@
+ain't:not
+amn't:am not
+aren't:are not
+can't:cannot
+'cause:because
+could've: could have
+couldn't:could not
+couldn't've:could not have
+daren't:dare not
+daresn't: dare not
+dasn't:dare not
+didn't:did not
+dosen't:does not
+don't: do not
+gimme:give me
+gonna:going to
+gotta:got to
+hadn't:had not
+hasn't:has not
+haven't:have not
+he'd:he would
+he'll:he will
+he's:he is
+he've:he have
+how'd:how did
+how'll:how will
+how're:how are
+how's:how is
+i'd:i had
+i'll:i will
+i'm:i am
+i'm'a:i am about to
+imma:i am about to
+i'm'o:i am going to
+i've:i have
+isn't:is not
+it'd:it would
+it'll:it will
+it's:it is
+let's:let us
+ma'am:madam
+mayn't:may not
+may've:may have
+mightn't:might not
+might've:might have
+mustn't:must not
+mustn't've:must not have
+must've:must have
+needn't:need not
+ol':old
+oughtn't:ought not
+shalln't:shall not
+shan't:shall not
+she'd:she had
+she'll:she will
+she's:she is
+should've:should have
+shouldn't:should not
+shouldn't've:should not have
+somebody's:somebody is
+something's:something is
+that'll:that will
+that're:that are
+that's:that is
+that'd:that would
+there'd:there had
+there'll:there will
+there're:there are
+there's:there is
+these're:these are
+they'd:they had
+they'll:they will
+they're:they are
+they've:they have
+those're:those are
+'tis:it is
+to've:to have
+'twas:it was
+wasn't:was not
+we'd:we had
+we'd've:we would have
+we'll:we will
+we're:we are
+we've:we have
+weren't:were not
+what'd:what did
+what'll:what will
+what're:what are
+what's:what is
+what've:what have
+when's:when is
+where'd:where did
+where're:where are
+where's:where is
+where've:where have
+who'd:who would
+who'd've:who would have
+who'll:who will
+who're:who are
+who's:who is
+who've:who have
+why'd:why did
+why're:why are
+why's:why is
+won't:will not
+would've:would have
+wouldn't:would not
+y'all:you all
+yall:you all
+you'd:you would
+you'll:you will
+you're:you are
+you've:you have
