@@ -152,6 +152,12 @@ class Processor():
         #noun's - everyone's cookies
         #'s as in is - everyone's dead
         for i in range(0,len(tempusrinput)):
+
+            #remove empty cells
+            if len(tempusrinput[i]) == 0:
+                continue
+
+            #split the 's
             if '\'s' in tempusrinput[i]:
                 splitted = tempusrinput[i].split('\'',1)
                 usrinput.append(splitted[0])
@@ -194,9 +200,6 @@ class Processor():
         slrAVG = nestedOutline[4]
         slrSD = nestedOutline[5]
         phrasePosDiff = [0,] * len(phrasePos)
-
-        #phraseDistModMultiplier = 0.3 #Random values my d00d, cos original might be too high
-        #slrModMultiplier = 0.3 #Random values my d00d
 
         #Calculate [phrasePosDiff]
         #Convert [phrasePos] to [phrasePosDiff] e.g. [1,3,8] > [0,2,5]
