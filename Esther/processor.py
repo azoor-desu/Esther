@@ -248,9 +248,15 @@ class Processor():
                             #If phraseposdiff is at the left side, smaller that AVG - SD
                             amountOut = (phrasePosDiffAvgSd[i][0] - phrasePosDiffAvgSd[i][1]) - phrasePosDiff[i]
 
-                        #phraseDistMod = amountOut / SD * 100
                         if phrasePosDiffAvgSd[i][1] != 0: #prevent divide by zero error if program saves repeated entries
-                            phraseDistMod = amountOut / phrasePosDiffAvgSd[i][1]
+
+                            #phraseDistMod = (SD - amountOut) / SD >> IF amountOut is smaller than SD (usually), returns value 1 to 0.00001
+                            #IF (SD - amountOut) is <= 0 (-ve) (exceeds AVG + SD + SD range, very out-there value), oh ho ho big big penalty dude
+                            if (phrasePosDiffAvgSd[i][1] - amountOut) > 0:
+                                phraseDistMod = (phrasePosDiffAvgSd[i][1] - amountOut) / phrasePosDiffAvgSd[i][1]
+                            else:
+                                #penalty: put a minimum cap on how low the penalty goes, cos it'll go quite low
+                                phraseDistMod = 0.01
                         else:
                             #If SD is 0, leave phraseDistMod as default 1.
                             phraseDistMod = 1
