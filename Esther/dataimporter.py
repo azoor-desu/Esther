@@ -145,12 +145,13 @@ class DataImporter():
         newOutline = outlines
         for key, value in this.trainingdata.items():
             #Find the nestedOutline from outlines.
-            phrases = key.split(' ')
-            for i in range(0,len(outlines[phrases[0]])):
-                if phrases in outlines[phrases[0]][i]:
-                    #Edit nestedoutline
-                    slr = this.GetSLRFromTrainingData(key)
-                    newOutline[phrases[0]][i] = (newOutline[phrases[0]][i][0], newOutline[phrases[0]][i][1], this.GetPhrasePosDiffAvgSdFromTrainingData(key), newOutline[phrases[0]][i][3],this.GetAvgOfList(slr),this.GetSDOfList(slr))
+            if len(this.trainingdata[key]) > 3:
+                phrases = key.split(' ')
+                for i in range(0,len(outlines[phrases[0]])):
+                    if phrases in outlines[phrases[0]][i]:
+                        #Edit nestedoutline
+                        slr = this.GetSLRFromTrainingData(key)
+                        newOutline[phrases[0]][i] = (newOutline[phrases[0]][i][0], newOutline[phrases[0]][i][1], this.GetPhrasePosDiffAvgSdFromTrainingData(key), newOutline[phrases[0]][i][3],this.GetAvgOfList(slr),this.GetSDOfList(slr))
         return this.outlines
 
     #------------------------SYNONYMS & ENTITIES IMPORTING----------------------------

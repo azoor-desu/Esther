@@ -67,19 +67,11 @@ class Processor():
                 for nestedOutline in this.outlines.get(usrinput[i]):
                     textout.SystemPrint ("Recognized intent : " + str(nestedOutline))
 
-                    #Find any requests for entity in nestedOutline
-                    requestedEntities = [] #filled with !days, !daysrelative etc.
-                    extractedEntities = []
-                    requestedEntityToRemove = ""
-                    #ENTITIES STUFF: populate requestedEntities.
-                    #Search through phrases in nestedOutline and add any !entities to this array
-                    for j in range(0,len(nestedOutline[1])):
-                        if nestedOutline[1][j][0] == '!': #if phrase starts with !
-                            requestedEntities.append(nestedOutline[1][j]) #add that entity group to be used later
-
                     #create tracker for which position each phrase appears in user's sentence, phasePos
                     phrasePos = [-1,] * len(nestedOutline[1])
-                    this.SetPhrasePos(i, usrinput,nestedOutline, phrasePos, requestedEntities, extractedEntities, requestedEntityToRemove)
+                    this.SetPhrasePos(i, usrinput,nestedOutline, phrasePos)
+                    extractedEntities = this.GetExtractedEntities(i, usrinput,nestedOutline, phrasePos)
+
                     #check if any phrasePos values are -1. Invalidate this entire outline if so.
                     if -1 in phrasePos:
                         textout.SystemPrint ("**Some phrase is not found in this outline: " + str(nestedOutline[1]) + " Skipping this outline**")
@@ -171,27 +163,43 @@ class Processor():
                 usrinput[i] = usrinput[i][:-1]
         return usrinput
     
-    def SetPhrasePos(this, i, usrinput, nestedOutline, phrasePos, requestedEntities, extractedEntities, requestedEntityToRemove):
+    def SetPhrasePos(this, currentUsrinputIndex, usrinput, nestedOutline, phrasePos):
         #Start to scan the rest of the sentence using each outline in outlines[item]
         #Start scanning from detected word onwards, not full sentence.
-        for j in range(i,len(usrinput)):
-            if usrinput[j] in nestedOutline[1]: #if current word of user matches any phrases in outline
-                phrasePos[nestedOutline[1].index(usrinput[j])] = j #Set phrasePos of corresponding phrase to index j
+        for i in range(currentUsrinputIndex,len(usrinput)):
+            if usrinput[i] in nestedOutline[1]: #if current word of user matches any phrases in outline
+                phrasePos[nestedOutline[1].index(usrinput[i])] = i #Set phrasePos of corresponding phrase to index i
+                #Entities are left out of setting phrasePos, GetExtractedEntities will set the phrasePos.
+        print ("")
 
+    def GetExtractedEntities(this, currentUsrinputIndex, usrinput, nestedOutline, phrasePos):
+        requestedEntities = [] #Extracted from nestedOutline, stores all the entities needed by nestedOutline.
+        extractedEntities = [] #Extracted from usrinput, the actual phrases that will be passed to the final score part.
+        requestedEntityToRemove = ""
+
+        #POPULATING requestedEntities
+        #Search through phrases in nestedOutline and add any !entities to this array
+        for i in range(0,len(nestedOutline[1])):
+            if nestedOutline[1][i][0] == '!': #if phrase starts with '!'
+                requestedEntities.append(nestedOutline[1][i]) #add that entity group to be used later
+
+        #EXTRACTING ENTITIES
+        #Loop through usrinput and pull out all instances of entities that match.
+        for i in range (currentUsrinputIndex,len(usrinput)):
             #ENTITIES STUFF
             #Run word through list of requestedEntities, if any
             if len(requestedEntities) != 0:
                 for entityGrp in requestedEntities:
-                    #print ("User's word now: " + usrinput[j] + " \nthe list to compare:" + str(this.entities[entityGrp]))
-                    if usrinput[j] in this.entities[entityGrp]: #if user input matches relevant entities, give the !entity a phrasePos value.
-                        phrasePos[nestedOutline[1].index(entityGrp)] = j
-                        extractedEntities.append((entityGrp,usrinput[j])) #stores extracted entity as ("entityName","entityValue")
+                    #print ("User's word now: " + usrinput[i] + " \nthe list to compare:" + str(this.entities[entityGrp]))
+                    if usrinput[i] in this.entities[entityGrp]: #if user input matches relevant entities, give the !entity a phrasePos value.
+                        phrasePos[nestedOutline[1].index(entityGrp)] = i
+                        extractedEntities.append((entityGrp,usrinput[i])) #stores extracted entity as ("entityName","entityValue")
                         requestedEntityToRemove = entityGrp #disallow adding multiple entites if any to one outline. If outline requires one entity, return only one entity. Takes the first matched entity.
                         break
                 if requestedEntityToRemove != "":
                     requestedEntities.remove(requestedEntityToRemove)
                     requestedEntityToRemove = ""
-        print ("")
+        return extractedEntities
 
     def CalculateOutlineScore(this, phrasePos, nestedOutline, usrinputlength):
         outlineScore = 0
