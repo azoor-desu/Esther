@@ -21,11 +21,8 @@ class Processor():
         this.data.PopulateTrainingData()
         this.outlines = this.data.PopulateOutlinesDict()
         this.synonyms = this.data.PopulateSynonymsDict()
-        #this.entities = this.data.PopulateEntitiesDict()
+        this.entities = this.data.PopulateEntitiesDict()
         this.LoadAllModules()
-
-        this.entities.setdefault("!days",["monday","tuesday","wednesday","thursday","friday","saturday","sunday"])
-        this.entities.setdefault("!daysrelative",["yesterday","today","tomorrow", "the day after", "the day before"])
 
         textout.SystemPrint ("Processor: Processor initialized!\n")
         

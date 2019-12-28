@@ -81,7 +81,7 @@ class DataImporter():
             fileDirectories = filter(lambda x: x[-4:] == '.txt', os.listdir(INTENT_PATH))
             for filename in fileDirectories:
                 #strip and split ReadTxtFile at the same time.
-                intentTextArray = [x.strip() for x in this.ReadTxtFile(os.path.join(INTENT_PATH,filename)).split('\n')]
+                intentTextArray = [x.strip().lower() for x in this.ReadTxtFile(os.path.join(INTENT_PATH,filename)).split('\n')]
                 #Shovel each line of intentText into an outline entry
                 for outlineRaw in intentTextArray:
                     phrases = [x.strip() for x in outlineRaw.split(' ')]
@@ -163,7 +163,7 @@ class DataImporter():
             fileDirectories = filter(lambda x: x[-4:] == '.txt', os.listdir(SYNONYMS_PATH))
             for filename in fileDirectories:
                 #strip and split ReadTxtFile at the same time.
-                synonymTextArray = [x.strip() for x in this.ReadTxtFile(os.path.join(SYNONYMS_PATH,filename)).split('\n')]
+                synonymTextArray = [x.strip().lower() for x in this.ReadTxtFile(os.path.join(SYNONYMS_PATH,filename)).split('\n')]
                 #Shovel each line of synonymTextArray into a dict entry
                 for dictEntry in synonymTextArray:
                     phrases = [x.strip() for x in dictEntry.split(':')]
@@ -174,38 +174,22 @@ class DataImporter():
         return synonyms
 
     def PopulateEntitiesDict(this): #WORK IN PROGRESS, going to work on multipl eword entity entries.
+        entities = {}
         textout.SystemPrint ("DataImporter: Loading entities from disk...")
 
         if os.path.exists(INTENT_PATH):
-            fileDirectories = filter(lambda x: x[-4:] == '.txt', os.listdir(INTENT_PATH))
+            fileDirectories = filter(lambda x: x[-4:] == '.txt', os.listdir(ENTITIES_PATH))
             for filename in fileDirectories:
                 #strip and split ReadTxtFile at the same time.
-                intentTextArray = [x.strip() for x in this.ReadTxtFile(os.path.join(INTENT_PATH,filename)).split('\n')]
-                #Shovel each line of intentText into an outline entry
-                for outlineRaw in intentTextArray:
-                    phrases = [x.strip() for x in outlineRaw.split(' ')]
-                    phraseWeight =[]
-                    phrasesCleaned=[] #add version without the [] at the back of the phrase
-                    #add phraseweight
-                    for phrase in phrases:
-                        if '[' in phrase and ']' in phrase:
-                            #split the string by [ and ], by replacing ] with [, then split all by ['s
-                            phraseSplit = phrase.replace(']','[').split('[')
-                            number = phraseSplit[1]
-                            phrasesCleaned.append(phraseSplit[0]) #add version without the [] at the back of the phrase
-                            phraseWeight.append(float(number))
-                        else:
-                            #No [x] number found, putting default phraseweight as 1
-                            phraseWeight.append(1)
-                            phrasesCleaned.append(phrase)
-                    this.AddOutline(filename.replace(".txt",""),phrasesCleaned,phraseWeight)
-                    textout.SystemPrint ("Adding outline intentname: " + filename.replace(".txt",""))
-                    textout.SystemPrint ("Adding outline phrases: " + str(phrases))
-                    textout.SystemPrint ("Adding outline phraseWeight: " + str(phraseWeight))
-            textout.SystemPrint ("DataImporter: Intent outlines loaded!")
+                entitiesTextArray = [x.strip().lower() for x in this.ReadTxtFile(os.path.join(ENTITIES_PATH,filename)).split('\n')]
+                entityRequest = "!" + filename.replace(".txt","")
+                entities.setdefault(entityRequest,entitiesTextArray)
+
+            textout.SystemPrint ("DataImporter: Entities loaded!")
         else:
-            textout.SystemWarning ("DataImporter: WARNING! Intent outlines folder is not found. Not loading any outlines!")
-        return this.outlines
+            textout.SystemWarning ("DataImporter: WARNING! Entities folder is not found. Not loading any entities!")
+        print (str(entities))
+        return entities
 
     #------------------------------MISC----------------------------------
 
