@@ -25,7 +25,7 @@ class Processor():
         this.LoadAllModules()
 
         this.entities.setdefault("!days",["monday","tuesday","wednesday","thursday","friday","saturday","sunday"])
-        this.entities.setdefault("!daysrelative",["yesterday","today","tomorrow"])
+        this.entities.setdefault("!daysrelative",["yesterday","today","tomorrow", "the day after", "the day before"])
 
         textout.SystemPrint ("Processor: Processor initialized!\n")
         
@@ -100,21 +100,11 @@ class Processor():
                 textout.Print ("First outline set: \"" + highestKey + "\" with values: "+ str(scores[highestKey]))
             else:
                 #If number of phrases in value > number of phrases in highest key
-                textout.Print ("Highestkey stats:")
-                textout.Print ("Highestkey: " + highestKey)
-                textout.Print ("HighestKey phrase length: " + str(len(scores[highestKey][2])))
-                textout.Print ("Challenger stats:")
-                textout.Print ("Challenger key: " + key)
-                textout.Print ("Challenger phrase length: " + str(len(value[2])))
                 if len(value[2]) > len(scores[highestKey][2]):
                     #If number of phrases in value > number of phrases in highest key
                     highestKey = key
-                    textout.Print ("OH SHIT CHALLENGER HAS WON!!!!!!!!!!!!!\n-------------------------")
                 elif value[0] > scores[highestKey][0]:
                     highestKey = key
-                    textout.Print ("OH SHIT CHALLENGER HAS BARELY WON!!!!!!!!!!!!!\n-------------------------")
-                else:
-                    textout.Print ("Aww challenger lost....")
 
         if highestKey != "":
             textout.SystemPrint ("Intent chosen: \"" + highestKey + "\" with values: "+ str(scores[highestKey]))
@@ -173,33 +163,71 @@ class Processor():
         print ("")
 
     def GetExtractedEntities(this, currentUsrinputIndex, usrinput, nestedOutline, phrasePos):
-        requestedEntities = [] #Extracted from nestedOutline, stores all the entities needed by nestedOutline.
-        extractedEntities = [] #Extracted from usrinput, the actual phrases that will be passed to the final score part.
-        requestedEntityToRemove = ""
+        entityRequests = [] #Keeps track of what entities are still needed to be extracted.
+        entityRequestsIndex = 0 #Tracks which entityRequest to be searching for.
+        entityRequestIndexInOutline = [] #For use in setting phrasePos.
+        entityLookupDict = {} #Stores phrases used by entityRequests, changes on each new entityRequest
+        entityLengths = [] #Different lengths of entityLookupDict keys. No repetitons. Changes with entityLookupDict
+        #e.g. "monday" = 1 word length, "the day after" = 3 word length. entityLengths = [1,3]
+        extractedEntities = [] #Extracted from usrinput, the actual phrases that will be returned
+        #Format: [(phrase, entityRequest), ...]
 
-        #POPULATING requestedEntities
-        #Search through phrases in nestedOutline and add any !entities to this array
+        def PopulateDict(entityRequest):
+            entityLookupDict.clear()
+            entityLengths.clear()
+            for entity in this.entities[entityRequest]:
+                entityLookupDict.setdefault(entity, entityRequest)
+
+                length = len(entity.split(' '))
+                if length not in entityLengths:
+                    entityLengths.append (length)
+
+        def AssignPhrasePos(wordIndex):
+            phrasePos[entityRequestIndexInOutline[entityRequestsIndex]] = wordIndex
+
+        #searches through entityLookupDict for a match with usrinput[currentUsrinputIndex]
+        #Returns true if match is found, false if not.
+        def SearchThroughDict(currentWordIndex):
+            for lengths in entityLengths:
+                if lengths == 1:
+                    if usrinput[currentWordIndex] in entityLookupDict:
+                        extractedEntities.append((usrinput[currentWordIndex], entityLookupDict[usrinput[currentWordIndex]]))
+                        AssignPhrasePos(currentWordIndex)
+                        return True
+                else:
+                    extendedPhrase = ""
+                    if currentWordIndex + lengths <= len(usrinput): #Prevent out of range error if last word of the sentence
+                        for i in range(currentWordIndex, currentWordIndex + lengths):
+                            extendedPhrase = extendedPhrase + " " + usrinput[i] 
+                        extendedPhrase = extendedPhrase.strip()
+                        if extendedPhrase in entityLookupDict:
+                            extractedEntities.append((extendedPhrase, entityLookupDict[extendedPhrase]))
+                            AssignPhrasePos(currentWordIndex)
+                            return True
+            return False
+
+        #MainThread
+        #Populate entityRequests
         for i in range(0,len(nestedOutline[1])):
             if nestedOutline[1][i][0] == '!': #if phrase starts with '!'
-                requestedEntities.append(nestedOutline[1][i]) #add that entity group to be used later
+                entityRequests.append(nestedOutline[1][i])
+                entityRequestIndexInOutline.append(i)
 
-        #EXTRACTING ENTITIES
-        #Loop through usrinput and pull out all instances of entities that match.
-        for i in range (currentUsrinputIndex,len(usrinput)):
-            #ENTITIES STUFF
-            #Run word through list of requestedEntities, if any
-            if len(requestedEntities) != 0:
-                for entityGrp in requestedEntities:
-                    #print ("User's word now: " + usrinput[i] + " \nthe list to compare:" + str(this.entities[entityGrp]))
-                    if usrinput[i] in this.entities[entityGrp]: #if user input matches relevant entities, give the !entity a phrasePos value.
-                        phrasePos[nestedOutline[1].index(entityGrp)] = i
-                        extractedEntities.append((entityGrp,usrinput[i])) #stores extracted entity as ("entityName","entityValue")
-                        requestedEntityToRemove = entityGrp #disallow adding multiple entites if any to one outline. If outline requires one entity, return only one entity. Takes the first matched entity.
+        if len(entityRequests) != 0:
+            PopulateDict(entityRequests[entityRequestsIndex])
+
+            #Extracting entites
+            for i in range(currentUsrinputIndex, len(usrinput)):
+                if entityRequestsIndex < (len(entityRequests)) and SearchThroughDict(i) is True:
+                    if entityRequestsIndex + 1 < len(entityRequests):
+                        entityRequestsIndex = entityRequestsIndex + 1
+                        PopulateDict(entityRequests[entityRequestsIndex])
+                    else:
                         break
-                if requestedEntityToRemove != "":
-                    requestedEntities.remove(requestedEntityToRemove)
-                    requestedEntityToRemove = ""
+        #print (extractedEntities)
         return extractedEntities
+
+        
 
     def CalculateOutlineScore(this, phrasePos, nestedOutline, usrinputlength):
         outlineScore = 0

@@ -10,7 +10,8 @@ def EstherReply(output):
     print (esther.persona + ": " + output)
     
 def SystemPrint(output):
-    print ("System: " + output)
+    if not mute:
+        print ("System: " + output)
 
 def SystemWarning(output):
     print ("WARNING: " + output)
