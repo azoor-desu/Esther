@@ -96,12 +96,13 @@ class Processor():
                 highestKey = key
                 textout.Print ("First outline set: \"" + highestKey + "\" with values: "+ str(scores[highestKey]))
             else:
-                #If number of phrases in value > number of phrases in highest key
-                if len(value[2]) > len(scores[highestKey][2]):
+                if value[0] > 0.3: #Disregard any value below 0.3 score
                     #If number of phrases in value > number of phrases in highest key
-                    highestKey = key
-                elif value[0] > scores[highestKey][0]:
-                    highestKey = key
+                    if len(value[2]) > len(scores[highestKey][2]):
+                        highestKey = key
+                    #If value of this score is higher than the highest so far
+                    elif value[0] > scores[highestKey][0]:
+                        highestKey = key
 
         if highestKey != "":
             textout.SystemPrint ("Intent chosen: \"" + highestKey + "\" with values: "+ str(scores[highestKey]))
@@ -223,8 +224,6 @@ class Processor():
                         break
         #print (extractedEntities)
         return extractedEntities
-
-        
 
     def CalculateOutlineScore(this, phrasePos, nestedOutline, usrinputlength):
         outlineScore = 0
