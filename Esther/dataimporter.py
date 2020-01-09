@@ -173,7 +173,7 @@ class DataImporter():
             textout.SystemWarning ("DataImporter: WARNING! Synonyms folder is not found. Not loading any synonyms!")
         return synonyms
 
-    def PopulateEntitiesDict(this): #WORK IN PROGRESS, going to work on multipl eword entity entries.
+    def PopulateEntitiesDict(this):
         entities = {}
         textout.SystemPrint ("DataImporter: Loading entities from disk...")
 
@@ -188,7 +188,6 @@ class DataImporter():
             textout.SystemPrint ("DataImporter: Entities loaded!")
         else:
             textout.SystemWarning ("DataImporter: WARNING! Entities folder is not found. Not loading any entities!")
-        print (str(entities))
         return entities
 
     #------------------------------MISC----------------------------------

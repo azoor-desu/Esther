@@ -14,6 +14,7 @@ class Processor():
     outlines = {}
     synonyms = {}
     entities = {}
+    modules = []
 
     def __init__(this):
         textout.SystemPrint("Processor: Starting processor initialization" )
@@ -22,6 +23,7 @@ class Processor():
         this.outlines = this.data.PopulateOutlinesDict()
         this.synonyms = this.data.PopulateSynonymsDict()
         this.entities = this.data.PopulateEntitiesDict()
+        
         this.LoadAllModules()
 
         textout.SystemPrint ("Processor: Processor initialized!\n")
@@ -30,7 +32,6 @@ class Processor():
         textout.SystemPrint ("Module Loader: Loading all modules into processor instance...")
 
         locations = [MOD_PATH]
-        this.modules = []
 
         for finder, name, ispkg in pkgutil.walk_packages(locations):
             try:
@@ -45,7 +46,7 @@ class Processor():
         textout.SystemPrint ("{} modules(s) loaded".format(len(this.modules)))
     
     #------------------------------PROCESSING----------------------------------
-    def ProcessInput(this,_usrinput):
+    def ProcessInput(this,_usrinput): #Returns a custom item. Refer to "return" at bottom of function
 
         usrinput = this.FormatUsrinput(_usrinput)
 
@@ -84,7 +85,7 @@ class Processor():
                     outlineScore = this.CalculateOutlineScore(phrasePos, nestedOutline, len(usrinput))
                     scores.setdefault(this.CombineStringsList(nestedOutline[1]),(outlineScore,extractedEntities, nestedOutline[1], phrasePos, len(usrinput), nestedOutline[0]))
 
-        textout.SystemPrint ("Final Results: " + str(scores))
+        textout.Print ("Final Results: " + str(scores))
 
         #Search for highest score
         highestKey = ""
@@ -111,7 +112,9 @@ class Processor():
             #scores[0] IS TEMPORARY. scores[0] == top probability. 
             #scores[x][2] = phrases | scores[x][3] = phrasePos  | scores[x][4] = usrinputlength 
             this.data.UpdateTrainingData(scores[highestKey][2], scores[highestKey][3], scores[highestKey][4], this.outlines)
-        print ("")
+
+            return (scores[highestKey][5],scores[highestKey][1]) #Returns: (intentName, [(entityType)])
+        return None
 
     def FormatUsrinput(this, _usrinput):
         #clean up the user input. Remove all punctuations, leaving only . - ! and '
@@ -158,7 +161,6 @@ class Processor():
             if usrinput[i] in nestedOutline[1]: #if current word of user matches any phrases in outline
                 phrasePos[nestedOutline[1].index(usrinput[i])] = i #Set phrasePos of corresponding phrase to index i
                 #Entities are left out of setting phrasePos, GetExtractedEntities will set the phrasePos.
-        print ("")
 
     def GetExtractedEntities(this, currentUsrinputIndex, usrinput, nestedOutline, phrasePos):
         entityRequests = [] #Keeps track of what entities are still needed to be extracted.
@@ -222,7 +224,6 @@ class Processor():
                         PopulateDict(entityRequests[entityRequestsIndex])
                     else:
                         break
-        #print (extractedEntities)
         return extractedEntities
 
     def CalculateOutlineScore(this, phrasePos, nestedOutline, usrinputlength):

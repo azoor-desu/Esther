@@ -1,6 +1,6 @@
 import __main__ as esther
 
-mute=False
+mute=True
 
 def Print(output):
     if not mute:
@@ -10,7 +10,6 @@ def EstherReply(output):
     print (esther.persona + ": " + output)
     
 def SystemPrint(output):
-    if not mute:
         print ("System: " + output)
 
 def SystemWarning(output):
