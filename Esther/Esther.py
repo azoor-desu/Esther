@@ -21,7 +21,8 @@ class Esther(object):
         textout.EstherReply("Hello. I am " + persona + ". How may I be of service?")
 
         CHUNK = 1024
-        RES_PATH = os.path.join(os.getcwd(), "data\\resources\\beep_hi.wav")
+        #RES_PATH = os.path.join(os.getcwd(), "data\\resources\\beep_hi.wav")
+        RES_PATH = "/home/pi/Esther/Esther/data/resources/beep_hi.wav"
         wf = wave.open(RES_PATH, 'rb')
         stream = this.p.open(format=this.p.get_format_from_width(wf.getsampwidth()),
                 channels=wf.getnchannels(),

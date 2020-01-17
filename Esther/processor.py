@@ -5,7 +5,8 @@ import dataimporter
 import textout
 
 APP_PATH = os.getcwd()
-MOD_PATH = os.path.join(APP_PATH, "modules")
+#MOD_PATH = os.path.join(APP_PATH, "modules")
+MOD_PATH = "/home/pi/Esther/Esther/modules"
 
 class Processor():
     #outline structure
@@ -122,10 +123,11 @@ class Processor():
 
         #Replace synonyms before splitting
         #https://stackoverflow.com/questions/17730788/search-and-replace-with-whole-word-only-option
-        def replace(match):
-            return this.synonyms[match.group(0)]
-        tempusrinput = re.sub('|'.join(r'\b%s\b' % re.escape(s) for s in this.synonyms), 
-        replace, tempusrinput)
+        def replace_all(dic, text):
+            for i, j in dic.items():
+                text = re.sub(i,j,text)
+            return text
+        tempusrinput = replace_all(this.synonyms, tempusrinput)
 
         tempusrinput = tempusrinput.split(' ')
         usrinput = []

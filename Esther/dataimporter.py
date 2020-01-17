@@ -4,11 +4,15 @@ import json
 import textout
 
 #APP_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
-cwd = os.getcwd()
-TRAIN_PATH = os.path.join(cwd,"data","training.json")
-INTENT_PATH = os.path.join(cwd,"data","intents")
-SYNONYMS_PATH = os.path.join(cwd,"data","synonyms")
-ENTITIES_PATH = os.path.join(cwd,"data","entities")
+#cwd = os.getcwd()
+#TRAIN_PATH = os.path.join(cwd,"data","training.json")
+#INTENT_PATH = os.path.join(cwd,"data","intents")
+#SYNONYMS_PATH = os.path.join(cwd,"data","synonyms")
+#ENTITIES_PATH = os.path.join(cwd,"data","entities")
+TRAIN_PATH = "/home/pi/Esther/Esther/data/training.json"
+INTENT_PATH = "/home/pi/Esther/Esther/data/intents"
+SYNONYMS_PATH = "/home/pi/Esther/Esther/data/synonyms"
+ENTITIES_PATH = "/home/pi/Esther/Esther/data/entities"
 
 class DataImporter():
     trainingdata = {}
