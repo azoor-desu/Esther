@@ -6,7 +6,7 @@ import textout
 
 APP_PATH = os.getcwd()
 #MOD_PATH = os.path.join(APP_PATH, "modules")
-MOD_PATH = "/home/pi/Esther/Esther/modules"
+MOD_PATH = "/home/pi/Esther/modules"
 
 class Processor():
     #outline structure

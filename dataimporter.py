@@ -9,10 +9,10 @@ import textout
 #INTENT_PATH = os.path.join(cwd,"data","intents")
 #SYNONYMS_PATH = os.path.join(cwd,"data","synonyms")
 #ENTITIES_PATH = os.path.join(cwd,"data","entities")
-TRAIN_PATH = "/home/pi/Esther/Esther/data/training.json"
-INTENT_PATH = "/home/pi/Esther/Esther/data/intents"
-SYNONYMS_PATH = "/home/pi/Esther/Esther/data/synonyms"
-ENTITIES_PATH = "/home/pi/Esther/Esther/data/entities"
+TRAIN_PATH = "/home/pi/Esther/data/training.json"
+INTENT_PATH = "/home/pi/Esther/data/intents"
+SYNONYMS_PATH = "/home/pi/Esther/data/synonyms"
+ENTITIES_PATH = "/home/pi/Esther/data/entities"
 
 class DataImporter():
     trainingdata = {}
