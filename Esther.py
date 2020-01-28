@@ -4,11 +4,15 @@ import textout
 import processor
 import pyaudio
 import wave
+import snowboydecoder
 
 persona = "Esther"
 
 
 class Esther(object):
+
+    def __init__(this):
+        this.interrupted = False;
 
     #Runs once on program startup.
     def setup(this):
@@ -18,36 +22,48 @@ class Esther(object):
         this.p = pyaudio.PyAudio()
         print ("-----Setup Finished!-----\n")
         print ("------------------------")
-        textout.EstherReply("Hello. I am " + persona + ". How may I be of service?")
+        
 
-        CHUNK = 1024
-        #RES_PATH = os.path.join(os.getcwd(), "data\\resources\\beep_hi.wav")
-        RES_PATH = "/home/pi/Esther/data/resources/beep_hi.wav"
-        wf = wave.open(RES_PATH, 'rb')
-        stream = this.p.open(format=this.p.get_format_from_width(wf.getsampwidth()),
-                channels=wf.getnchannels(),
-                rate=wf.getframerate(),
-                output=True)
-        data = wf.readframes(CHUNK)
-        while len(data) > 0:
-            stream.write(data)
-            data = wf.readframes(CHUNK)
-        stream.stop_stream()
-        stream.close()
-        this.p.terminate()
     
+    TOP_DIR = os.path.dirname(os.path.abspath(__file__))
+    MODEL_FILE = os.path.join(TOP_DIR, "Esther.pmdl")
     #Main running loop for taking input and stuff.
     def run(this):
-        while True:
-            userInput = input('You: ')
 
-            intent = this.pcs.ProcessInput(userInput) #Returns: (intentName, [(entityType)]) OR NONE
-            this.FindAction(intent)
-          
+        detector = snowboydecoder.HotwordDetector("/home/pi/Esther/Esther.pmdl", sensitivity=0.5)
+        print('Listening... Press Ctrl+C to exit')
+        textout.EstherReply("Hello. I am " + persona + ". Call for me if you need anything!")
 
-            print ("------------------------")
-            print ("------------------------")
-            textout.EstherReply("What can I do for you?")
+        # main loop, Passive Listening
+        detector.start(detected_callback=this.ActiveListening,
+               interrupt_check=this.interrupt_callback,
+               sleep_time=0.03)
+            
+    def interrupt_callback(this):
+        return this.interrupted
+
+    def ActiveListening(this):
+        threshold = None
+        textout.SystemPrint("Started to listen actively")
+
+        #RECORD A WAV FILE, CUTOFF AT 12s OR FALLS BELOW THRESHOLD
+        #SEND TO WITAI
+        #RECIEVE INPUT
+        #SEND TO PROCESSOR AND RETURN INTENT
+        #FIND ACTION.
+
+        userInput = input('You: ')
+        textout.SystemPrint("PESUDO-ACTIVELISTENING ENDED")
+        intent = this.pcs.ProcessInput(userInput) #Returns: (intentName, [(entityType)]) OR NONE
+
+        this.FindAction(intent)
+        textout.SystemPrint("Stopped listening actively")
+
+        print ("------------------------")
+        print ("------------------------")
+        textout.EstherReply("Call for me if you need anything!")
+
+        
 
     def FindAction(this, intent): #Finds the relevant action module and runs it.
         if intent != None:
