@@ -4,15 +4,11 @@ import textout
 import processor
 import pyaudio
 import wave
-import snowboydecoder
+import stt
 
 persona = "Esther"
 
-
 class Esther(object):
-
-    def __init__(this):
-        this.interrupted = False;
 
     #Runs once on program startup.
     def setup(this):
@@ -23,41 +19,16 @@ class Esther(object):
         print ("-----Setup Finished!-----\n")
         print ("------------------------")
         
-
-    
-    TOP_DIR = os.path.dirname(os.path.abspath(__file__))
-    MODEL_FILE = os.path.join(TOP_DIR, "Esther.pmdl")
     #Main running loop for taking input and stuff.
     def run(this):
 
-        detector = snowboydecoder.HotwordDetector("/home/pi/Esther/Esther.pmdl", sensitivity=0.5)
-        print('Listening... Press Ctrl+C to exit')
         textout.EstherReply("Hello. I am " + persona + ". Call for me if you need anything!")
+        stt.PassiveListening(this,stt.ActiveListening)
 
-        # main loop, Passive Listening
-        detector.start(detected_callback=this.ActiveListening,
-               interrupt_check=this.interrupt_callback,
-               sleep_time=0.03)
-            
-    def interrupt_callback(this):
-        return this.interrupted
-
-    def ActiveListening(this):
-        threshold = None
-        textout.SystemPrint("Started to listen actively")
-
-        #RECORD A WAV FILE, CUTOFF AT 12s OR FALLS BELOW THRESHOLD
-        #SEND TO WITAI
-        #RECIEVE INPUT
-        #SEND TO PROCESSOR AND RETURN INTENT
-        #FIND ACTION.
-
-        userInput = input('You: ')
-        textout.SystemPrint("PESUDO-ACTIVELISTENING ENDED")
-        intent = this.pcs.ProcessInput(userInput) #Returns: (intentName, [(entityType)]) OR NONE
-
+    def ProcessTranscribed(this,input):
+        
+        intent = this.pcs.ProcessInput(input) #Returns: (intentName, [(entityType)]) OR NONE
         this.FindAction(intent)
-        textout.SystemPrint("Stopped listening actively")
 
         print ("------------------------")
         print ("------------------------")

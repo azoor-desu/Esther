@@ -172,7 +172,10 @@ class HotwordDetector(object):
                 logger.info(message)
                 callback = detected_callback[ans-1]
                 if callback is not None:
-                    callback()
+                    if "ActiveListening" in str(callback): #Stupid hack. Don't change the name of the ActiveListening method in stt.py.
+                        callback(self)
+                    else:
+                        callback()
                 self.resetThresholdLoop()
             if ans is not -1:
                 self.fetchPartialThreshold(data)
