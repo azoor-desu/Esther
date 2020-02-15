@@ -158,7 +158,7 @@ class HotwordDetector(object):
             data = self.ring_buffer.get()
             
             if len(data) == 0:
-                self.fetchPartialThreshold(data)
+                #self.fetchPartialThreshold(data)
                 time.sleep(sleep_time)
                 continue
 
@@ -192,29 +192,30 @@ class HotwordDetector(object):
         self.audio.terminate()
         
     nextThresholdTime = -1
-    thresholdInterval= 1
+    thresholdInterval= 2
     nextRecordTime = -1
     recordInterval = 60
     lastN = [] # stores the lastN score values
     THRESHOLD = 0
     
     def fetchPartialThreshold(self, data):
+        
         if time.time() >= self.nextRecordTime:
             #Start recording
             #Setup for threshold recording
             self.nextThresholdTime = time.time() + self.thresholdInterval
-            self.lastN = [i for i in range(20)]
-            average = 0
             self.nextRecordTime = time.time() + self.recordInterval   
+            self.lastN = [i for i in range(11)]
         elif self.nextThresholdTime is not -1:
             if time.time() < self.nextThresholdTime:
                 #Add onto list for calculation
                 self.lastN.pop(0)
                 self.lastN.append(self.getScore(data)) #Data is in 4096 chunks
+                print (str(self.getScore(data)))
             else:
                 #Finally calculate the threshold, and set record time to something else
                 average = sum(self.lastN) / len(self.lastN)
-                self.THRESHOLD = average * 1.8
+                self.THRESHOLD = average
                 self.nextThresholdTime = -1
                 print ("THRESHOLD: " + str(self.THRESHOLD))
     
