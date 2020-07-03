@@ -5,6 +5,7 @@ import processor
 import pyaudio
 import wave
 import stt
+import subprocess
 
 persona = "Esther"
 
@@ -16,6 +17,7 @@ class Esther(object):
         this.pcs = processor.Processor()
         this.pcs.entities.setdefault("!persona",[persona.lower(),])
         this.p = pyaudio.PyAudio()
+        subprocess.call('~/Esther/bluetooth/autopair', shell=True)
         print ("-----Setup Finished!-----\n")
         print ("------------------------")
         
@@ -33,8 +35,6 @@ class Esther(object):
         print ("------------------------")
         print ("------------------------")
         textout.EstherReply("Call for me if you need anything!")
-
-        
 
     def FindAction(this, intent): #Finds the relevant action module and runs it.
         if intent != None:

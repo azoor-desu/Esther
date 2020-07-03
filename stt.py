@@ -3,6 +3,9 @@ import os
 import textout
 import pyaudio
 import audioop
+import tempfile
+import wave
+import transcriber
 
 TOP_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_FILE = os.path.join(TOP_DIR, "Esther.pmdl")
@@ -28,7 +31,7 @@ def ActiveListening(this):
     #FIND ACTION.
 
     p = pyaudio.PyAudio()
-    stream_in_active = p.open(format=pyaudio.paInt16, channels=1,
+    stream = p.open(format=pyaudio.paInt16, channels=1,
                 rate=16000, input=True,
                 frames_per_buffer=1024)
 
@@ -36,9 +39,9 @@ def ActiveListening(this):
 
     lastN = [144 * 1.2 for i in range(15)] #changing array length will determine if average will change faster or not
 
-    for i in range(0, 187):
+    for i in range(0, 187): #187 = RATE(16000) / CHUNK(1024) * TIME (12s)
 
-            data = stream_in_active.read(1024)
+            data = stream.read(1024)
             frames.append(data)
             score = getScore(data)
 
@@ -52,11 +55,24 @@ def ActiveListening(this):
                 break
 
     textout.SystemPrint("Listening Timeout!")
-    stream_in_active.stop_stream()
-    stream_in_active.close()
+    stream.stop_stream()
+    stream.close()
+
+    with tempfile.NamedTemporaryFile(mode='w+b') as f:
+        wav_fp = wave.open(f, 'wb')
+        wav_fp.setnchannels(1)
+        wav_fp.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
+        wav_fp.setframerate(16000)
+        wav_fp.writeframes(''.join(frames))
+        wav_fp.close()
+        f.seek(0)
+    
+    transcriber.TranscribeAudiofile(this,f)
+
     p.terminate()
 
     textout.SystemPrint("Stopped listening actively")
+
 
 def getScore(data):
         rms = audioop.rms(data, 2)

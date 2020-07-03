@@ -204,7 +204,7 @@ class HotwordDetector(object):
             #Start recording
             #Setup for threshold recording
             self.nextThresholdTime = time.time() + self.thresholdInterval
-            self.nextRecordTime = time.time() + self.recordInterval   
+            self.nextRecordTime = time.time() + self.recordInterval
             self.lastN = [i for i in range(11)]
         elif self.nextThresholdTime is not -1:
             if time.time() < self.nextThresholdTime:
