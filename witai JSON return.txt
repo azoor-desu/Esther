@@ -1,0 +1,23 @@
+{
+	'entities':{
+
+		'increase_decrease:decrease': [{
+				'body': 'turn the', 
+				'confidence': 0.4183,
+				'end': 16, 
+				'entities': [], 
+				'id': '274818370402950', 
+				'name': 'increase_decrease', 
+				'role': 'decrease', 
+				'start': 8, 
+				'suggested': True, 
+				'type': 'value', 
+				'value': 'turn the'
+		}]
+	}, 
+
+	'intents': [{'confidence': 0.9901, 'id': '678660689530041', 'name': 'pc_volume_set'}], 
+	'text': 'can you turn the volume up', 
+	'traits': {'wit$sentiment': [{'confidence': 0.7311, 'id': '5ac2b50a-44e4-466e-9d49-bad6bd40092c', 'value': 'neutral'}]
+	}
+}

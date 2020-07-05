@@ -20,7 +20,6 @@ def TranscribeAudiofile(this,audiofile):
 
     try:
         r.raise_for_status()
-        text = r.json()
     except requests.exceptions.HTTPError:
         print("HTTP ERROR")
     except requests.exceptions.RequestException:
@@ -28,7 +27,7 @@ def TranscribeAudiofile(this,audiofile):
     except KeyError:
         print("KEY ERROR")
     else:
-        transcribed = []
-        #if text:
-            #transcribed.append(text.upper())
-        print(text)
+        spokentext = r.json()['text']
+        print (spokentext)
+        pokentext = r.json()['intents'][0]['name']
+        print (pokentext)
