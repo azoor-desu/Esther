@@ -30,18 +30,21 @@ def ActiveListening(this):
     #SEND TO PROCESSOR AND RETURN INTENT
     #FIND ACTION.
 
+    RATE = 16000
+    CHUNK = 1024
+
     p = pyaudio.PyAudio()
     stream = p.open(format=pyaudio.paInt16, channels=1,
-                rate=16000, input=True,
-                frames_per_buffer=1024)
+                rate=RATE, input=True,
+                frames_per_buffer=CHUNK)
 
     frames = []
 
     lastN = [144 * 1.2 for i in range(15)] #changing array length will determine if average will change faster or not
 
-    for i in range(0, 187): #187 = RATE(16000) / CHUNK(1024) * TIME (12s)
+    for i in range(0, int(RATE/CHUNK*5)): #RATE(16000) / CHUNK(1024) * TIME (12s)
 
-            data = stream.read(1024)
+            data = stream.read(CHUNK)
             frames.append(data)
             score = getScore(data)
 
@@ -57,19 +60,19 @@ def ActiveListening(this):
     textout.SystemPrint("Listening Timeout!")
     stream.stop_stream()
     stream.close()
+    p.terminate()
 
     with tempfile.NamedTemporaryFile(mode='w+b') as f:
         wav_fp = wave.open(f, 'wb')
         wav_fp.setnchannels(1)
         wav_fp.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
         wav_fp.setframerate(16000)
-        wav_fp.writeframes(''.join(frames))
+        wav_fp.writeframes(b''.join(frames))
         wav_fp.close()
         f.seek(0)
-    
-    transcriber.TranscribeAudiofile(this,f)
+        transcriber.TranscribeAudiofile(this,f)
 
-    p.terminate()
+    
 
     textout.SystemPrint("Stopped listening actively")
 
